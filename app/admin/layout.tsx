@@ -11,7 +11,12 @@ import {
   ChevronDown,
   Bell,
   Sun,
-  Moon
+  Moon,
+  UserCircle,
+  Wallet,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,8 +38,18 @@ interface AdminUser {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { 
+    name: 'Dashboard', 
+    href: '/admin/dashboard', 
+    icon: LayoutDashboard,
+    submenu: [
+      { name: 'Profile', href: '/admin/profile', icon: UserCircle },
+    ]
+  },
   { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Deposits', href: '/admin/deposits', icon: ArrowDownCircle },
+  { name: 'Withdrawals', href: '/admin/withdrawals', icon: ArrowUpCircle },
+  { name: 'Exchange', href: '/admin/exchange', icon: RefreshCw },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -100,21 +115,45 @@ export default function AdminLayout({
         </div>
         <nav className="px-4 pt-4">
           {navigation.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || 
+              (item.submenu?.some(sub => pathname === sub.href));
             const Icon = item.icon;
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {item.name}
-              </Link>
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+                {item.submenu && (
+                  <div className="ml-6 space-y-1">
+                    {item.submenu.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      const isSubActive = pathname === subItem.href;
+                      return (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                            isSubActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`}
+                        >
+                          <SubIcon className="h-4 w-4" />
+                          {subItem.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
