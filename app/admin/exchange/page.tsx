@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -16,6 +17,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Exchange {
@@ -43,9 +54,20 @@ interface Exchange {
   rate: number;
 }
 
+interface ConfirmationDialog {
+  isOpen: boolean;
+  exchangeId: string;
+  action: 'complete' | 'reject' | null;
+}
+
 export default function Exchange() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({
+    isOpen: false,
+    exchangeId: "",
+    action: null,
+  });
   const [exchanges, setExchanges] = useState<Exchange[]>([
     {
       id: "1",
@@ -97,9 +119,18 @@ export default function Exchange() {
       ));
       
       toast.success(`Exchange ${newStatus} successfully`);
+      setConfirmDialog({ isOpen: false, exchangeId: "", action: null });
     } catch (error) {
       toast.error("Failed to update exchange status");
     }
+  };
+
+  const openConfirmDialog = (exchangeId: string, action: 'complete' | 'reject') => {
+    setConfirmDialog({
+      isOpen: true,
+      exchangeId,
+      action,
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -109,6 +140,17 @@ export default function Exchange() {
       rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
+  };
+
+  const getConfirmationMessage = (action: string) => {
+    switch (action) {
+      case 'complete':
+        return "Are you sure you want to complete this exchange? This will process the conversion and update the customer's balances.";
+      case 'reject':
+        return "Are you sure you want to reject this exchange? The original amount will be returned to the customer's account.";
+      default:
+        return "";
+    }
   };
 
   const filteredExchanges = exchanges.filter(exchange => {
@@ -206,26 +248,38 @@ export default function Exchange() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {exchange.status === "pending" && (
-                        <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/admin/exchange/${exchange.id}`}>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                            onClick={() => handleStatusChange(exchange.id, "completed")}
+                            className="flex items-center gap-1"
                           >
-                            Complete
+                            <ExternalLink className="h-4 w-4" />
+                            Details
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                            onClick={() => handleStatusChange(exchange.id, "rejected")}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                        </Link>
+                        {exchange.status === "pending" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                              onClick={() => openConfirmDialog(exchange.id, "complete")}
+                            >
+                              Complete
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                              onClick={() => openConfirmDialog(exchange.id, "reject")}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -234,6 +288,43 @@ export default function Exchange() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog 
+        open={confirmDialog.isOpen} 
+        onOpenChange={(isOpen) => 
+          setConfirmDialog({ isOpen, exchangeId: "", action: null })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.action === "complete" 
+                ? "Complete Exchange" 
+                : "Reject Exchange"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.action && getConfirmationMessage(confirmDialog.action)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDialog.action && confirmDialog.exchangeId) {
+                  handleStatusChange(confirmDialog.exchangeId, confirmDialog.action);
+                }
+              }}
+              className={
+                confirmDialog.action === "complete"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              {confirmDialog.action === "complete" ? "Complete" : "Reject"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
