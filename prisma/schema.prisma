@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Define your models here
 model Admin {
   id        Int      @id @default(autoincrement())
   loginId   String   @unique @db.Char(8)
@@ -28,11 +21,111 @@ model Admin {
 }
 
 model Customer {
+  id                  Int       @id @default(autoincrement())
+  email               String    @unique
+  name                String
+  phone               String?
+  password            String
+  active              Boolean   @default(true)
+  isActivated         Boolean   @default(false)
+  lastLoginTime       DateTime?
+  socialSecurityNumber String?
+  addresses           Address[]
+  accounts            Account[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model Account {
+  id          Int           @id @default(autoincrement())
+  accountNo   String        @unique
+  balance     Decimal       @default(0) @db.Decimal(15, 2)
+  currency    String        @default("USD")
+  isActive    Boolean       @default(true)
+  customerId  Int
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  transactions Transaction[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([accountNo])
+}
+
+model Transaction {
+  id            Int           @id @default(autoincrement())
+  transactionId String        @unique
+  type          TransactionType
+  amount        Decimal       @db.Decimal(15, 2)
+  description   String?
+  status        TransactionStatus @default(PENDING)
+  accountId     Int
+  account       Account       @relation(fields: [accountId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([accountId])
+  @@index([transactionId])
+}
+
+model InvalidToken {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String
-  phone     String?
-  password  String
+  token     String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model VerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  email     String
+  type      String   @default("EMAIL_VERIFICATION")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
+model Address {
+  id              Int           @id @default(autoincrement())
+  type            AddressType   @default(PRIMARY)
+  streetAddress   String
+  city            String
+  state           String
+  postalCode      String
+  country         String        @default("United States")
+  isDefault       Boolean       @default(false)
+  customerId      Int
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([customerId])
+  @@index([type])
+}
+
+// Enum for transaction types
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+}
+
+// Enum for transaction statuses
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+// Enum for address types
+enum AddressType {
+  PRIMARY
+  BILLING
+  SHIPPING
 }

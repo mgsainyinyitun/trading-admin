@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
+import { verifyToken, extractTokenFromHeader } from './jwt';
+import { prisma } from './prisma';
 
 export function getTokenFromHeader(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -10,14 +11,21 @@ export function getTokenFromHeader(req: NextRequest) {
 }
 
 export async function validateToken(token: string) {
-  // Here you would:
-  // 1. Verify JWT token
-  // 2. Return decoded user data
-  // For demo, we'll return mock data
-  return {
-    id: '1',
-    email: 'john@example.com',
-  };
+  try {
+    // Check if token is invalidated
+    const isInvalid = await isTokenInvalid(token);
+    if (isInvalid) {
+      return null;
+    }
+
+    const decoded = verifyToken(token);
+    return {
+      id: decoded.customerId,
+      email: decoded.email,
+    };
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function authenticateRequest(req: NextRequest) {
@@ -26,4 +34,33 @@ export async function authenticateRequest(req: NextRequest) {
     return null;
   }
   return validateToken(token);
+}
+
+export async function isTokenInvalid(token: string): Promise<boolean> {
+  const invalidToken = await prisma.invalidToken.findUnique({
+    where: { token },
+  });
+
+  if (!invalidToken) {
+    return false;
+  }
+
+  // If token has expired, clean it up
+  if (invalidToken.expiresAt < new Date()) {
+    await prisma.invalidToken.delete({
+      where: { id: invalidToken.id },
+    });
+    return false;
+  }
+
+  return true;
+}
+
+export async function invalidateToken(token: string, expiresAt: Date): Promise<void> {
+  await prisma.invalidToken.create({
+    data: {
+      token,
+      expiresAt,
+    },
+  });
 }
