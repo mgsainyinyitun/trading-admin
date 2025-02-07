@@ -41,11 +41,9 @@ const navigation = [
   { 
     name: 'Dashboard', 
     href: '/admin/dashboard', 
-    icon: LayoutDashboard,
-    submenu: [
-      { name: 'Profile', href: '/admin/profile', icon: UserCircle },
-    ]
+    icon: LayoutDashboard
   },
+  { name: 'Profile', href: '/admin/profile', icon: UserCircle },
   { name: 'Customers', href: '/admin/customers', icon: Users },
   { name: 'Deposits', href: '/admin/deposits', icon: ArrowDownCircle },
   { name: 'Withdrawals', href: '/admin/withdrawals', icon: ArrowUpCircle },
@@ -62,7 +60,7 @@ export default function AdminLayout({
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [notificationCount, setNotificationCount] = useState(3); // Example notification count
+  const [notificationCount, setNotificationCount] = useState(3);
   const [user, setUser] = useState<AdminUser>({
     id: '1',
     name: 'Admin User',
@@ -115,45 +113,21 @@ export default function AdminLayout({
         </div>
         <nav className="px-4 pt-4">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || 
-              (item.submenu?.some(sub => pathname === sub.href));
+            const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
-              <div key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-                {item.submenu && (
-                  <div className="ml-6 space-y-1">
-                    {item.submenu.map((subItem) => {
-                      const SubIcon = subItem.icon;
-                      const isSubActive = pathname === subItem.href;
-                      return (
-                        <Link
-                          key={subItem.name}
-                          href={subItem.href}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                            isSubActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                          }`}
-                        >
-                          <SubIcon className="h-4 w-4" />
-                          {subItem.name}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {item.name}
+              </Link>
             );
           })}
         </nav>

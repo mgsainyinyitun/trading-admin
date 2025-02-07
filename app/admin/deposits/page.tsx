@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -16,6 +17,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Deposit {
@@ -40,9 +51,20 @@ interface Deposit {
   reference: string;
 }
 
+interface ConfirmationDialog {
+  isOpen: boolean;
+  depositId: string;
+  action: 'approve' | 'reject' | null;
+}
+
 export default function Deposits() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({
+    isOpen: false,
+    depositId: "",
+    action: null,
+  });
   const [deposits, setDeposits] = useState<Deposit[]>([
     {
       id: "1",
@@ -78,7 +100,6 @@ export default function Deposits() {
 
   const handleStatusChange = async (depositId: string, newStatus: 'approved' | 'rejected') => {
     try {
-      // In a real application, you would make an API call here
       setDeposits(deposits.map(deposit => 
         deposit.id === depositId 
           ? { ...deposit, status: newStatus }
@@ -86,9 +107,18 @@ export default function Deposits() {
       ));
       
       toast.success(`Deposit ${newStatus} successfully`);
+      setConfirmDialog({ isOpen: false, depositId: "", action: null });
     } catch (error) {
       toast.error("Failed to update deposit status");
     }
+  };
+
+  const openConfirmDialog = (depositId: string, action: 'approve' | 'reject') => {
+    setConfirmDialog({
+      isOpen: true,
+      depositId,
+      action,
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -187,26 +217,38 @@ export default function Deposits() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {deposit.status === "pending" && (
-                        <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/admin/deposits/${deposit.id}`}>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                            onClick={() => handleStatusChange(deposit.id, "approved")}
+                            className="flex items-center gap-1"
                           >
-                            Approve
+                            <ExternalLink className="h-4 w-4" />
+                            Details
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                            onClick={() => handleStatusChange(deposit.id, "rejected")}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
+                        </Link>
+                        {deposit.status === "pending" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                              onClick={() => openConfirmDialog(deposit.id, "approve")}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                              onClick={() => openConfirmDialog(deposit.id, "reject")}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -215,6 +257,45 @@ export default function Deposits() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog 
+        open={confirmDialog.isOpen} 
+        onOpenChange={(isOpen) => 
+          setConfirmDialog({ isOpen, depositId: "", action: null })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.action === "approve" 
+                ? "Approve Deposit" 
+                : "Reject Deposit"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.action === "approve"
+                ? "Are you sure you want to approve this deposit? This action cannot be undone."
+                : "Are you sure you want to reject this deposit? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDialog.action && confirmDialog.depositId) {
+                  handleStatusChange(confirmDialog.depositId, confirmDialog.action);
+                }
+              }}
+              className={
+                confirmDialog.action === "approve"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              {confirmDialog.action === "approve" ? "Approve" : "Reject"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

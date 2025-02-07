@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -16,6 +17,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Copy } from "lucide-react";
+import { Search, Filter, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface Withdrawal {
@@ -41,9 +52,20 @@ interface Withdrawal {
   reference: string;
 }
 
+interface ConfirmationDialog {
+  isOpen: boolean;
+  withdrawalId: string;
+  action: 'approve' | 'reject' | 'complete' | null;
+}
+
 export default function Withdrawals() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({
+    isOpen: false,
+    withdrawalId: "",
+    action: null,
+  });
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([
     {
       id: "1",
@@ -82,7 +104,6 @@ export default function Withdrawals() {
 
   const handleStatusChange = async (withdrawalId: string, newStatus: 'approved' | 'rejected' | 'completed') => {
     try {
-      // In a real application, you would make an API call here
       setWithdrawals(withdrawals.map(withdrawal => 
         withdrawal.id === withdrawalId 
           ? { ...withdrawal, status: newStatus }
@@ -90,9 +111,18 @@ export default function Withdrawals() {
       ));
       
       toast.success(`Withdrawal ${newStatus} successfully`);
+      setConfirmDialog({ isOpen: false, withdrawalId: "", action: null });
     } catch (error) {
       toast.error("Failed to update withdrawal status");
     }
+  };
+
+  const openConfirmDialog = (withdrawalId: string, action: 'approve' | 'reject' | 'complete') => {
+    setConfirmDialog({
+      isOpen: true,
+      withdrawalId,
+      action,
+    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -108,6 +138,19 @@ export default function Withdrawals() {
       rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
+  };
+
+  const getConfirmationMessage = (action: string) => {
+    switch (action) {
+      case 'approve':
+        return "Are you sure you want to approve this withdrawal? This will allow the withdrawal to proceed.";
+      case 'reject':
+        return "Are you sure you want to reject this withdrawal? The funds will be returned to the customer's account.";
+      case 'complete':
+        return "Are you sure you want to mark this withdrawal as completed? This confirms that the funds have been sent.";
+      default:
+        return "";
+    }
   };
 
   const filteredWithdrawals = withdrawals.filter(withdrawal => {
@@ -215,36 +258,48 @@ export default function Withdrawals() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {withdrawal.status === "pending" && (
-                        <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/admin/withdrawals/${withdrawal.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Details
+                          </Button>
+                        </Link>
+                        {withdrawal.status === "pending" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                              onClick={() => openConfirmDialog(withdrawal.id, "approve")}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                              onClick={() => openConfirmDialog(withdrawal.id, "reject")}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                        {withdrawal.status === "approved" && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                            onClick={() => handleStatusChange(withdrawal.id, "approved")}
+                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                            onClick={() => openConfirmDialog(withdrawal.id, "complete")}
                           >
-                            Approve
+                            Mark as Sent
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                            onClick={() => handleStatusChange(withdrawal.id, "rejected")}
-                          >
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                      {withdrawal.status === "approved" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
-                          onClick={() => handleStatusChange(withdrawal.id, "completed")}
-                        >
-                          Mark as Sent
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -253,6 +308,51 @@ export default function Withdrawals() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog 
+        open={confirmDialog.isOpen} 
+        onOpenChange={(isOpen) => 
+          setConfirmDialog({ isOpen, withdrawalId: "", action: null })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.action === "approve" 
+                ? "Approve Withdrawal" 
+                : confirmDialog.action === "complete"
+                ? "Complete Withdrawal"
+                : "Reject Withdrawal"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.action && getConfirmationMessage(confirmDialog.action)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDialog.action && confirmDialog.withdrawalId) {
+                  handleStatusChange(confirmDialog.withdrawalId, confirmDialog.action);
+                }
+              }}
+              className={
+                confirmDialog.action === "approve"
+                  ? "bg-green-600 hover:bg-green-700"
+                  : confirmDialog.action === "complete"
+                  ? "bg-blue-600 hover:bg-blue-700"
+                  : "bg-red-600 hover:bg-red-700"
+              }
+            >
+              {confirmDialog.action === "approve" 
+                ? "Approve" 
+                : confirmDialog.action === "complete"
+                ? "Complete"
+                : "Reject"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
