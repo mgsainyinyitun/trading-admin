@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Edit2, Trash2 } from "lucide-react";
+import { Search, UserPlus, Edit2, Trash2, ExternalLink } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -170,6 +171,16 @@ export default function CustomerList() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Link href={`/admin/customers/${customer.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Details
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="icon"
