@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { generateToken } from "@/lib/jwt";
+import { compare } from "bcrypt";
 
 export async function POST(req: Request) {
   try {
@@ -25,23 +27,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify password (in production, compare hashed passwords)
-    if (customer.password !== password) {
+    // Verify password using bcrypt
+    const isValidPassword = await compare(password, customer.password);
+    if (!isValidPassword) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Remove password from response
-    const { password: _, ...customerData } = customer;
+    // Generate JWT token
+    const token = generateToken({
+      customerId: customer.id.toString(),
+      email: customer.email,
+    });
 
     return NextResponse.json({
-      success: true,
-      data: customerData,
+      message: "Login successful",
+      token,
+      customer: {
+        id: customer.id,
+        email: customer.email,
+        name: customer.name,
+        phone: customer.phone,
+      },
     });
   } catch (error) {
-    console.error("Error in customer login:", error);
+    console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
