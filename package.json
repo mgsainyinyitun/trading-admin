@@ -53,6 +53,7 @@
     "embla-carousel-react": "^8.3.0",
     "eslint": "8.49.0",
     "eslint-config-next": "13.5.1",
+    "formidable": "^3.5.2",
     "input-otp": "^1.2.4",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.446.0",
@@ -80,6 +81,7 @@
   },
   "devDependencies": {
     "@prisma/client": "^6.3.1",
+    "@types/formidable": "^3.4.5",
     "prisma": "^6.3.1"
   },
   "keywords": [],
