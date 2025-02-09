@@ -23,7 +23,42 @@
 ## Transaction Management
 
 ### Transaction Operations
-- [ ] `POST /api/v1/transactions/deposit` - Deposit money
+- [x] `POST /api/v1/transactions/deposit` - Deposit money
+  - **Description**: Deposit money into a customer's account
+  - **Authentication**: Required (Bearer Token)
+  - **Request Body**:
+    ```json
+    {
+      "accountNo": "string",
+      "amount": "decimal",
+      "description": "string (optional)"
+    }
+    ```
+  - **Response (200 OK)**:
+    ```json
+    {
+      "message": "Deposit successful",
+      "transaction": {
+        "transactionId": "string",
+        "type": "DEPOSIT",
+        "amount": "decimal",
+        "description": "string",
+        "status": "COMPLETED",
+        "accountId": "number",
+        "createdAt": "datetime"
+      },
+      "account": {
+        "accountNo": "string",
+        "balance": "decimal",
+        "currency": "string"
+      }
+    }
+    ```
+  - **Error Responses**:
+    - `400 Bad Request`: Invalid amount or account number
+    - `401 Unauthorized`: Invalid or missing authentication token
+    - `404 Not Found`: Account not found
+    - `500 Internal Server Error`: Server error during transaction processing
 - [ ] `POST /api/v1/transactions/withdraw` - Withdraw money
 - [ ] `POST /api/v1/transactions/transfer` - Transfer money between accounts
 - [ ] `GET /api/v1/transactions` - List transactions (with filters)
