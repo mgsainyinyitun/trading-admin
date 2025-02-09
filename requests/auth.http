@@ -48,3 +48,32 @@ Authorization: Bearer {{authToken}}
 GET {{baseUrl}}/api/v1/customer/profile
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+
+### Create Deposit Transaction
+POST {{baseUrl}}/api/v1/transactions/deposit
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "accountNo": "1738856250480251",
+    "amount": 100.00,
+    "description": "Deposit for savings"
+}
+
+
+### Upload File
+POST {{baseUrl}}/api/v1/transactions/file
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=boundary123
+
+--boundary123
+Content-Disposition: form-data; name="transactionId"
+
+12345
+--boundary123
+Content-Disposition: form-data; name="file"; filename="example.jpg"
+Content-Type: image/jpeg
+
+< ./example.jpg
+--boundary123--
