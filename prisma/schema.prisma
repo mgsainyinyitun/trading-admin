@@ -21,51 +21,65 @@ model Admin {
 }
 
 model Customer {
-  id                  Int       @id @default(autoincrement())
-  email               String    @unique
-  name                String
-  phone               String?
-  password            String
-  active              Boolean   @default(true)
-  isActivated         Boolean   @default(false)
-  lastLoginTime       DateTime?
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique
+  name                 String
+  phone                String?
+  password             String
+  active               Boolean   @default(true)
+  isActivated          Boolean   @default(false)
+  lastLoginTime        DateTime?
   socialSecurityNumber String?
-  addresses           Address[]
-  accounts            Account[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  addresses            Address[]
+  accounts             Account[]
+  trades               Trade[]
+  winRates             WinRate[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 model Account {
-  id          Int           @id @default(autoincrement())
-  accountNo   String        @unique
-  balance     Decimal       @default(0) @db.Decimal(15, 2)
-  currency    String        @default("USD")
-  isActive    Boolean       @default(true)
-  customerId  Int
-  customer    Customer      @relation(fields: [customerId], references: [id])
+  id           Int           @id @default(autoincrement())
+  accountNo    String        @unique
+  balance      Decimal       @default(0) @db.Decimal(15, 2)
+  currency     String        @default("USD")
+  isActive     Boolean       @default(true)
+  customerId   Int
+  customer     Customer      @relation(fields: [customerId], references: [id])
   transactions Transaction[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  trades       Trade[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@index([customerId])
   @@index([accountNo])
 }
 
 model Transaction {
-  id            Int           @id @default(autoincrement())
-  transactionId String        @unique
-  type          TransactionType
-  amount        Decimal       @db.Decimal(15, 2)
-  description   String?
-  status        TransactionStatus @default(PENDING)
-  accountId     Int
-  account       Account       @relation(fields: [accountId], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               Int               @id @default(autoincrement())
+  transactionId    String            @unique
+  type             TransactionType
+  amount           Decimal           @db.Decimal(15, 2)
+  description      String?
+  status           TransactionStatus @default(PENDING)
+  accountId        Int
+  account          Account           @relation(fields: [accountId], references: [id])
+  transactionFiles TransactionFile[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([accountId])
   @@index([transactionId])
+}
+
+model TransactionFile {
+  id            Int      @id @default(autoincrement())
+  transactionId Int
+  filePath      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
 }
 
 model InvalidToken {
@@ -91,21 +105,59 @@ model VerificationToken {
 }
 
 model Address {
-  id              Int           @id @default(autoincrement())
-  type            AddressType   @default(PRIMARY)
-  streetAddress   String
-  city            String
-  state           String
-  postalCode      String
-  country         String        @default("United States")
-  isDefault       Boolean       @default(false)
-  customerId      Int
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            Int         @id @default(autoincrement())
+  type          AddressType @default(PRIMARY)
+  streetAddress String
+  city          String
+  state         String
+  postalCode    String
+  country       String      @default("United States")
+  isDefault     Boolean     @default(false)
+  customerId    Int
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([customerId])
   @@index([type])
+}
+
+model Trade {
+  id            Int           @id @default(autoincrement())
+  customerId    Int
+  accountId     Int
+  tradeType     TradingType // 'short' or 'long'
+  period        Int // duration in seconds
+  tradingStatus TradingStatus // Enum for trading status
+  tradeQuantity Float // Quantity of the trade
+  isSuccess     Boolean? // true if successful, false otherwise
+  createdAt     DateTime      @default(now()) // Timestamp for creation
+  updatedAt     DateTime      @updatedAt // Timestamp for last update
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  account  Account  @relation(fields: [accountId], references: [id])
+}
+
+model WinRate {
+  id         Int   @id @default(autoincrement())
+  customerId Int
+  winRate    Float @default(0.5)
+
+  customer  Customer @relation(fields: [customerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TradingSetting {
+  id          Int         @id @default(autoincrement())
+  seconds     Int
+  percentage  Float
+  tradingType TradingType @default(SHORT)
+  winRate     Float       @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([seconds, tradingType])
 }
 
 // Enum for transaction types
@@ -128,4 +180,16 @@ enum AddressType {
   PRIMARY
   BILLING
   SHIPPING
+}
+
+// Enum for trading status
+enum TradingStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum TradingType {
+  SHORT
+  LONG
 }
