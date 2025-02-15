@@ -7,189 +7,195 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Admin {
+model account {
+  id          Int           @id @default(autoincrement())
+  accountNo   String        @unique(map: "Account_accountNo_key")
+  balance     Decimal       @default(0.00) @db.Decimal(15, 2)
+  currency    String        @default("USDT")
+  isActive    Boolean       @default(true)
+  customerId  Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  customer    customer      @relation(fields: [customerId], references: [id], map: "Account_customerId_fkey")
+  trade       trade[]
+  transaction transaction[]
+
+  @@index([accountNo], map: "Account_accountNo_idx")
+  @@index([customerId], map: "Account_customerId_idx")
+}
+
+model address {
+  id            Int          @id @default(autoincrement())
+  type          address_type @default(PRIMARY)
+  streetAddress String
+  city          String
+  state         String
+  postalCode    String
+  country       String       @default("United States")
+  isDefault     Boolean      @default(false)
+  customerId    Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+  customer      customer     @relation(fields: [customerId], references: [id], map: "Address_customerId_fkey")
+
+  @@index([customerId], map: "Address_customerId_idx")
+  @@index([type], map: "Address_type_idx")
+}
+
+model admin {
   id        Int      @id @default(autoincrement())
-  loginId   String   @unique @db.Char(8)
-  email     String   @unique
+  loginId   String   @unique(map: "Admin_loginId_key") @db.Char(8)
+  email     String   @unique(map: "Admin_email_key")
   name      String?
   phone     String
   password  String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime
 
-  @@index([loginId])
+  @@index([loginId], map: "Admin_loginId_idx")
 }
 
-model Customer {
+model customer {
   id                   Int       @id @default(autoincrement())
-  email                String    @unique
+  email                String    @unique(map: "Customer_email_key")
   name                 String
   phone                String?
   password             String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime
   active               Boolean   @default(true)
   isActivated          Boolean   @default(false)
   lastLoginTime        DateTime?
   socialSecurityNumber String?
-  addresses            Address[]
-  accounts             Account[]
-  trades               Trade[]
-  winRates             WinRate[]
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  loginId              String    @unique(map: "Customer_loginId_key")
+  account              account[]
+  address              address[]
+  trade                trade[]
+  winrate              winrate[]
 }
 
-model Account {
-  id           Int           @id @default(autoincrement())
-  accountNo    String        @unique
-  balance      Decimal       @default(0) @db.Decimal(15, 2)
-  currency     String        @default("USD")
-  isActive     Boolean       @default(true)
-  customerId   Int
-  customer     Customer      @relation(fields: [customerId], references: [id])
-  transactions Transaction[]
-  trades       Trade[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  @@index([customerId])
-  @@index([accountNo])
-}
-
-model Transaction {
-  id               Int               @id @default(autoincrement())
-  transactionId    String            @unique
-  type             TransactionType
-  amount           Decimal           @db.Decimal(15, 2)
-  description      String?
-  status           TransactionStatus @default(PENDING)
-  accountId        Int
-  account          Account           @relation(fields: [accountId], references: [id])
-  transactionFiles TransactionFile[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-
-  @@index([accountId])
-  @@index([transactionId])
-}
-
-model TransactionFile {
-  id            Int      @id @default(autoincrement())
-  transactionId Int
-  filePath      String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  transaction Transaction @relation(fields: [transactionId], references: [id])
-}
-
-model InvalidToken {
+model invalidtoken {
   id        Int      @id @default(autoincrement())
-  token     String   @unique
+  token     String   @unique(map: "InvalidToken_token_key")
   createdAt DateTime @default(now())
   expiresAt DateTime
 
-  @@index([token])
-  @@index([expiresAt])
+  @@index([expiresAt], map: "InvalidToken_expiresAt_idx")
+  @@index([token], map: "InvalidToken_token_idx")
 }
 
-model VerificationToken {
+model trade {
+  id            Int                 @id @default(autoincrement())
+  customerId    Int
+  accountId     Int
+  tradeType     trade_tradeType
+  period        Int
+  tradingStatus trade_tradingStatus
+  isSuccess     Boolean?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime
+  tradeQuantity Float
+  account       account             @relation(fields: [accountId], references: [id], map: "Trade_accountId_fkey")
+  customer      customer            @relation(fields: [customerId], references: [id], map: "Trade_customerId_fkey")
+
+  @@index([accountId], map: "Trade_accountId_fkey")
+  @@index([customerId], map: "Trade_customerId_fkey")
+}
+
+model tradingsetting {
+  id          Int                        @id @default(autoincrement())
+  seconds     Int
+  percentage  Float
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime
+  tradingType tradingsetting_tradingType @default(SHORT)
+  winRate     Float                      @default(0)
+
+  @@unique([seconds, tradingType], map: "TradingSetting_seconds_tradingType_key")
+}
+
+model transaction {
+  id              Int                @id @default(autoincrement())
+  transactionId   String             @unique(map: "Transaction_transactionId_key")
+  type            transaction_type
+  amount          Decimal            @db.Decimal(15, 2)
+  description     String?
+  status          transaction_status @default(PENDING)
+  accountId       Int
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime
+  account         account            @relation(fields: [accountId], references: [id], map: "Transaction_accountId_fkey")
+  transactionfile transactionfile[]
+
+  @@index([accountId], map: "Transaction_accountId_idx")
+  @@index([transactionId], map: "Transaction_transactionId_idx")
+}
+
+model transactionfile {
+  id            Int         @id @default(autoincrement())
+  transactionId Int
+  filePath      String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime
+  transaction   transaction @relation(fields: [transactionId], references: [id], map: "TransactionFile_transactionId_fkey")
+
+  @@index([transactionId], map: "TransactionFile_transactionId_fkey")
+}
+
+model verificationtoken {
   id        Int      @id @default(autoincrement())
-  token     String   @unique
+  token     String   @unique(map: "VerificationToken_token_key")
   email     String
   type      String   @default("EMAIL_VERIFICATION")
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([token])
-  @@index([email])
+  @@index([email], map: "VerificationToken_email_idx")
+  @@index([token], map: "VerificationToken_token_idx")
 }
 
-model Address {
-  id            Int         @id @default(autoincrement())
-  type          AddressType @default(PRIMARY)
-  streetAddress String
-  city          String
-  state         String
-  postalCode    String
-  country       String      @default("United States")
-  isDefault     Boolean     @default(false)
-  customerId    Int
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  @@index([customerId])
-  @@index([type])
-}
-
-model Trade {
-  id            Int           @id @default(autoincrement())
-  customerId    Int
-  accountId     Int
-  tradeType     TradingType // 'short' or 'long'
-  period        Int // duration in seconds
-  tradingStatus TradingStatus // Enum for trading status
-  tradeQuantity Float // Quantity of the trade
-  isSuccess     Boolean? // true if successful, false otherwise
-  createdAt     DateTime      @default(now()) // Timestamp for creation
-  updatedAt     DateTime      @updatedAt // Timestamp for last update
-
-  customer Customer @relation(fields: [customerId], references: [id])
-  account  Account  @relation(fields: [accountId], references: [id])
-}
-
-model WinRate {
-  id         Int   @id @default(autoincrement())
+model winrate {
+  id         Int      @id @default(autoincrement())
   customerId Int
-  winRate    Float @default(0.5)
+  winRate    Float    @default(0.5)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  customer   customer @relation(fields: [customerId], references: [id], map: "WinRate_customerId_fkey")
 
-  customer  Customer @relation(fields: [customerId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@index([customerId], map: "WinRate_customerId_fkey")
 }
 
-model TradingSetting {
-  id          Int         @id @default(autoincrement())
-  seconds     Int
-  percentage  Float
-  tradingType TradingType @default(SHORT)
-  winRate     Float       @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@unique([seconds, tradingType])
+enum address_type {
+  PRIMARY
+  BILLING
+  SHIPPING
 }
 
-// Enum for transaction types
-enum TransactionType {
+enum transaction_type {
   DEPOSIT
   WITHDRAWAL
   TRANSFER
 }
 
-// Enum for transaction statuses
-enum TransactionStatus {
+enum trade_tradeType {
+  SHORT
+  LONG
+}
+
+enum transaction_status {
   PENDING
   COMPLETED
   FAILED
   REVERSED
 }
 
-// Enum for address types
-enum AddressType {
-  PRIMARY
-  BILLING
-  SHIPPING
-}
-
-// Enum for trading status
-enum TradingStatus {
+enum trade_tradingStatus {
   PENDING
   COMPLETED
   FAILED
 }
 
-enum TradingType {
+enum tradingsetting_tradingType {
   SHORT
   LONG
 }
