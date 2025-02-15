@@ -9,8 +9,8 @@ POST {{baseUrl}}/api/v1/customer/login
 Content-Type: application/json
 
 {
-    "email": "newuser@example.com",
-    "password": "newpassword123"
+    "email": "sainyi@gmail.com",
+    "password": "sainyi"
 }
 
 ### Update authToken with login response
