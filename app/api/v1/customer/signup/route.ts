@@ -49,9 +49,6 @@ export const OPTIONS = async (request: NextRequest) => {
   );
 };
 
-
-
-
 export async function POST(req: Request) {
   try {
     const {
@@ -112,7 +109,7 @@ export async function POST(req: Request) {
             create: {
               accountNo: generateAccountNumber(),
               balance: 0,
-              currency: "USD",
+              currency: "USDT",
               isActive: true
             }
           }

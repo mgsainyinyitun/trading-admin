@@ -43,3 +43,20 @@ export const tradeSuccessSchema = z.object({
     customerId: z.number().int().positive(),
     tradeId: z.number().int().positive(),
 });
+
+
+// Validation schema for deposit request
+export const depositRequestSchema = z.object({
+    currency: z.string().min(1, "Currency is required"),
+    amount: z
+        .string()
+        .or(z.number())
+        .transform((val) => {
+            const amount = typeof val === "string" ? Number.parseFloat(val) : val
+            if (isNaN(amount) || amount <= 0) {
+                throw new Error("Amount must be a positive number")
+            }
+            return amount
+        }),
+    description: z.string().optional(),
+})

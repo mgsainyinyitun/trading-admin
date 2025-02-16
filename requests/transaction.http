@@ -9,8 +9,8 @@ POST {{baseUrl}}/api/v1/customer/login
 Content-Type: application/json
 
 {
-    "email": "newuser@example.com",
-    "password": "newpassword123"
+    "email": "sainyi@gmail.com",
+    "password": "sainyi"
 }
 
 ### Update authToken with login response
@@ -22,7 +22,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "accountNo": "1738856250480251",
+    "accountNo": "1739632687033920",
     "amount": 100.00,
     "description": "Deposit for savings"
 }
@@ -39,7 +39,7 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "accountNo": "1738856250480251",
+    "accountNo": "1739629409954958",
     "amount": 50.00,
     "description": "Withdrawal for savings"
 }

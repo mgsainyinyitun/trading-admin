@@ -3,31 +3,31 @@ import { prisma } from "@/lib/prisma";
 import { authenticateRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-    // Verify customer token and get customer data
-    const customer = await authenticateRequest(req);
-    if (!customer) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+  // Verify customer token and get customer data
+  const customer = await authenticateRequest(req);
+  if (!customer) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const accounts = await prisma.account.findMany({
+    where: {
+      customerId: Number(customer.id)
     }
-  
-    const accounts = await prisma.account.findMany({
+  })
+
+  let transactions = [];
+
+  for (const account of accounts) {
+    const accountTransactions = await prisma.transaction.findMany({
       where: {
-        customerId: Number(customer.id)
+        accountId: account.id,
       }
     })
-  
-    let transactions = [];
-  
-    for (const account of accounts) {
-      const accountTransactions = await prisma.transaction.findMany({
-        where: {
-          accountId: account.id,
-        }
-      })
-      transactions.push(accountTransactions)
-    }
-  
-    return NextResponse.json(transactions);
+    transactions.push(...accountTransactions)
   }
+
+  return NextResponse.json({ allTransactions: transactions });
+}
