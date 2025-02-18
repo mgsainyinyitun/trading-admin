@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateCustomer } from "@/middleware/authMiddleware";
 
+
 export async function GET(req: NextRequest) {
     try {
-        // Authenticate the request
         const auth = await authenticateCustomer(req);
-        
+
         if (auth.error) {
             return NextResponse.json(
                 { error: auth.error },
@@ -14,7 +14,6 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        // Get customer profile with related data
         const customerId = auth.customer?.id;
         if (!customerId) {
             return NextResponse.json(
@@ -23,49 +22,26 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        const customer = await prisma.customer.findUnique({
+        // get all accounts of the customer
+        const accounts = await prisma.account.findMany({
             where: {
-                id: parseInt(customerId)
-            },
-            include: {
-                address: {
-                    orderBy: {
-                        isDefault: 'desc'
-                    }
-                },
-                account: {
-                    select: {
-                        id: true,
-                        accountNo: true,
-                        balance: true,
-                        currency: true,
-                        isActive: true,
-                        createdAt: true
-                    }
-                }
+                customerId: parseInt(customerId)
             }
         });
 
-        if (!customer) {
+        if (!accounts) {
             return NextResponse.json(
-                { error: "Customer not found" },
+                { error: "Assets not found" },
                 { status: 404 }
             );
         }
 
-        // Remove sensitive information
-        const { 
-            password,
-            socialSecurityNumber,
-            ...safeCustomerData 
-        } = customer;
-
         // Format the response
         const response = {
-            ...safeCustomerData,
-            accounts: customer.account.map(account => ({
+            accounts: accounts.map(account => ({
                 ...account,
-                balance: account.balance.toString() // Convert Decimal to string for JSON
+                inreview_balance: account.inreview_balance.toString(),
+                balance: account.balance.toString()
             }))
         };
 

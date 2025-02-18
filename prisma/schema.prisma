@@ -11,11 +11,12 @@ model account {
   id          Int           @id @default(autoincrement())
   accountNo   String        @unique(map: "Account_accountNo_key")
   balance     Decimal       @default(0.00) @db.Decimal(15, 2)
+  inreview_balance     Decimal       @default(0.00) @db.Decimal(15, 2)
   currency    String        @default("USDT")
   isActive    Boolean       @default(true)
   customerId  Int
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime      @default(now())
   customer    customer      @relation(fields: [customerId], references: [id], map: "Account_customerId_fkey")
   trade       trade[]
   transaction transaction[]

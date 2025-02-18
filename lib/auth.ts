@@ -37,7 +37,7 @@ export async function authenticateRequest(req: NextRequest) {
 }
 
 export async function isTokenInvalid(token: string): Promise<boolean> {
-  const invalidToken = await prisma.invalidToken.findUnique({
+  const invalidToken = await prisma.invalidtoken.findUnique({
     where: { token },
   });
 
@@ -47,7 +47,7 @@ export async function isTokenInvalid(token: string): Promise<boolean> {
 
   // If token has expired, clean it up
   if (invalidToken.expiresAt < new Date()) {
-    await prisma.invalidToken.delete({
+    await prisma.invalidtoken.delete({
       where: { id: invalidToken.id },
     });
     return false;
@@ -57,7 +57,7 @@ export async function isTokenInvalid(token: string): Promise<boolean> {
 }
 
 export async function invalidateToken(token: string, expiresAt: Date): Promise<void> {
-  await prisma.invalidToken.create({
+  await prisma.invalidtoken.create({
     data: {
       token,
       expiresAt,
