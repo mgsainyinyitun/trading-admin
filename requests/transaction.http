@@ -115,3 +115,8 @@ Content-Type: application/json
 GET {{baseUrl}}/api/v1/trade
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+### get balance of customer
+GET {{baseUrl}}/api/v1/customer/balance
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

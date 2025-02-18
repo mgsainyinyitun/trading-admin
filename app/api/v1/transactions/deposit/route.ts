@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
           description: validatedData.description,
           status: "PENDING",
           accountId: account.id,
+          updatedAt: new Date(),
         },
       });
 

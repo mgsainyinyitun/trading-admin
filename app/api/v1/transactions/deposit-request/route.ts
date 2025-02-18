@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
                 customerId: Number(customer.customer?.id)
             },
         });
+
         if (!accounts) {
             return NextResponse.json(
                 { error: "Account not found or access denied" },
@@ -78,16 +79,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        let account = accounts.find((account) => account.currency === depositData.currency);
+        let account = accounts.find((account) => account.currency === "USD");
         if (!account) {
             // create account for that curstomer with that currency
             account = await prisma.account.create({
                 data: {
                     customerId: Number(customer.customer?.id),
-                    currency: depositData.currency,
+                    currency: "USD",
                     accountNo: generateAccountNumber(),
                     balance: 0,
                     isActive: true,
+                    updatedAt: new Date()
                 },
             });
         }
@@ -120,15 +122,23 @@ export async function POST(request: NextRequest) {
                     description: depositData.description,
                     status: "PENDING",
                     accountId: account.id,
+                    updatedAt: new Date(),
                 },
             });
 
-            const transactionFile = await tx.transactionFile.create({
+            const transactionFile = await tx.transactionfile.create({
                 data: {
                     transactionId: transaction.id,
                     filePath: path,
+                    updatedAt: new Date(), // now date
                 },
             });
+            // update the account balance
+            await tx.account.update({
+                where: { id: account.id },
+                data: { inreview_balance: { increment: depositData.amount } },
+            });
+
             return { transaction, transactionFile };
         });
 

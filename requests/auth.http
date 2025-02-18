@@ -1,6 +1,6 @@
 ### Variables for different environments
 @baseUrl = http://localhost:3000
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcklkIjoiMiIsImVtYWlsIjoibmV3dXNlckBleGFtcGxlLmNvbSIsImlhdCI6MTczODg1NjQ2MCwiZXhwIjoxNzM4OTQyODYwfQ.pO1fDtysWRFnMDL7WLe-BWfnqy4fl4DxX-b1qTLrUxA
+@authToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcklkIjoiMiIsImVtYWlsIjoic2FpbnlpQGdtYWlsLmNvbSIsImlhdCI6MTczOTgwNTEzOSwiZXhwIjoxNzM5ODkxNTM5fQ._c8aeH9sf-WEa8rUmOzTXQzYUuPsaW0LuUtPrsqNE7E
 @verificationToken = 
 
 ### Login Customer
@@ -62,18 +62,9 @@ Content-Type: application/json
 }
 
 
-### Upload File
-POST {{baseUrl}}/api/v1/transactions/file
+### Get Customer Assets
+GET {{baseUrl}}/api/v1/customer/assets
 Authorization: Bearer {{authToken}}
-Content-Type: multipart/form-data; boundary=boundary123
+Content-Type: application/json
 
---boundary123
-Content-Disposition: form-data; name="transactionId"
 
-12345
---boundary123
-Content-Disposition: form-data; name="file"; filename="example.jpg"
-Content-Type: image/jpeg
-
-< ./example.jpg
---boundary123--
