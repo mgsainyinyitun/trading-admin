@@ -20,13 +20,12 @@ export async function GET(req: NextRequest) {
         }
     });
 
-    // remove the account with currency USD
-    const filterAccounts = accounts.find((account) => account.currency !== "USD");
 
 
     let totalBalance = 0;
     // Calculate total balance in USD for each account
     for (const account of accounts) {
+        if ((account.currency).toLocaleLowerCase() === 'usd')continue;
         if (['btc', 'eth', 'usdt', 'usdc'].includes(account.currency.toLowerCase())) {
             try {
                 const priceResponse = await fetch(

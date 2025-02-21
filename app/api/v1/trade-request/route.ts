@@ -2,6 +2,16 @@ import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { tradeSchema } from '@/zodValidate/validate';
 
+
+
+function generateAccountNumber(): string {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${timestamp}${random}`;
+}
+
+
+
 const getCorsHeaders = (origin: string) => {
   const headers = {
     "Access-Control-Allow-Methods": `${process.env.ALLOWED_METHODS}`,
@@ -39,34 +49,64 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const validatedData = tradeSchema.parse(body);
-    const { customerId, tradeType, period, tradeQuantity } = validatedData;
+    const { customerId, tradeType, period, tradeQuantity, currency } = validatedData;
 
 
     // Find the account and verify ownership
-    const account = await prisma.account.findFirst({
+    const accounts = await prisma.account.findMany({
       where: {
         customerId: Number(customerId),
-        currency: 'USD',
       },
     });
 
+    // account = account with currency of currency
+    let account = accounts.find(a => (a.currency).toLocaleLowerCase() === currency.toLocaleLowerCase());
+
+    // if account is not found, return error
     if (!account) {
+      // create account with that currency
+      account = await prisma.account.create({
+        data: {
+          customerId,
+          currency,
+          balance: 0,
+          accountNo: generateAccountNumber(),
+          updatedAt: new Date(),
+        },
+      });
+    }
+
+
+    if (!accounts || !account) {
       return NextResponse.json(
         { error: "Account not found or access denied" },
         { status: 404, headers: getCorsHeaders(request.headers.get("origin") || "") }
       );
     }
 
-    if (!account.isActive) {
-      return NextResponse.json(
-        { error: "Account is inactive" },
-        { status: 400, headers: getCorsHeaders(request.headers.get("origin") || "") }
-      );
+    // get all account balance not usd account
+    let totalBalance = 0;
+    // Calculate total balance in USD for each account
+    for (const account of accounts) {
+      if ((account.currency).toLocaleLowerCase() === 'usd') continue;
+      if (['btc', 'eth', 'usdt', 'usdc'].includes(account.currency.toLowerCase())) {
+        try {
+          const priceResponse = await fetch(
+            `https://min-api.cryptocompare.com/data/price?fsym=${account.currency}&tsyms=USD`
+          );
+          const priceData = await priceResponse.json();
+          const usdPrice = priceData.USD;
+          totalBalance += parseFloat(account.balance.toString()) * usdPrice;
+        } catch (error) {
+          console.error(`Error fetching price for ${account.currency}:`, error);
+          totalBalance += parseFloat(account.balance.toString());
+        }
+      } else {
+        totalBalance += parseFloat(account.balance.toString());
+      }
     }
 
-    // check balance 
-    const balance = account.balance;
-    if (balance.toNumber() < tradeQuantity) {
+    if (totalBalance < tradeQuantity) {
       return NextResponse.json(
         { error: "Insufficient balance" },
         { status: 400, headers: getCorsHeaders(request.headers.get("origin") || "") }

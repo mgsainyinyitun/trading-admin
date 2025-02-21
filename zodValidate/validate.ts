@@ -30,7 +30,7 @@ export const withdrawalSchema = z.object({
 // Validation schema for trade request
 export const tradeSchema = z.object({
     customerId: z.number().int().positive(),
-    // accountId: z.number().int().positive(),
+    currency: z.string().min(1),
     tradeType: z.enum(['SHORT', 'LONG']),
     period: z.number().int().positive(),
     // accountNo: z.string(),
