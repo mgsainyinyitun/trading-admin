@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         }
 
         // get all accounts of the customer
-        const accounts = await prisma.account.findMany({
+        let accounts = await prisma.account.findMany({
             where: {
                 customerId: parseInt(customerId)
             }
@@ -35,6 +35,8 @@ export async function GET(req: NextRequest) {
                 { status: 404 }
             );
         }
+        // remove the account with currency USD
+        accounts = accounts.filter((account) => account.currency !== "USD");
 
         // Format the response
         const response = {

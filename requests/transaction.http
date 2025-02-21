@@ -1,7 +1,6 @@
 ### Variables for different environments
 @baseUrl = http://localhost:3000
-@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcklkIjoiMiIsImVtYWlsIjoibmV3dXNlckBleGFtcGxlLmNvbSIsImlhdCI6MTczODk0ODIzMywiZXhwIjoxNzM5MDM0NjMzfQ.MDqjFKsQkLG0fWe4ZtRAnsCeUESJMXSvfuDu5lj5tmI
-@verificationToken = 
+@authToken
 
 ### Login Customer
 # @name login
@@ -99,5 +98,11 @@ Content-Type: application/json
 
 ### get balance of customer
 GET {{baseUrl}}/api/v1/customer/balance
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+
+### Trade Cleaner
+POST {{baseUrl}}/api/v1/trade-cleanup
 Authorization: Bearer {{authToken}}
 Content-Type: application/json

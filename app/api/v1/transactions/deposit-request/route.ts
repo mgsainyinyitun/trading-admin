@@ -79,13 +79,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        let account = accounts.find((account) => account.currency === "USD");
+        let account = accounts.find((account) => account.currency === depositData.currency);
         if (!account) {
             // create account for that curstomer with that currency
             account = await prisma.account.create({
                 data: {
                     customerId: Number(customer.customer?.id),
-                    currency: "USD",
+                    currency: depositData.currency,
                     accountNo: generateAccountNumber(),
                     balance: 0,
                     isActive: true,

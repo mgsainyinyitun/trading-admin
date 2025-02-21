@@ -15,7 +15,14 @@ export async function GET(req: NextRequest) {
     const accountTransactions = await prisma.trade.findMany({
         where: {
             customerId: Number(customer.id)
+        },
+        include: {
+            account: {
+                select: {
+                    accountNo: true
+                }
+            }
         }
-    })
+    });
     return NextResponse.json(accountTransactions);
 }
