@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { processPendingTrades } from '../api/v1/trade-cleanup/route';      
+import { processPendingTrades } from './function';      
 
 // Schedule task to run at midnight (00:00)
 cron.schedule('0 0 * * *', async () => {

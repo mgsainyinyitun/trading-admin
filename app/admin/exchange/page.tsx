@@ -311,7 +311,7 @@ export default function Exchange() {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.action && confirmDialog.exchangeId) {
-                  handleStatusChange(confirmDialog.exchangeId, confirmDialog.action);
+                  handleStatusChange(confirmDialog.exchangeId, confirmDialog.action === "complete" ? "completed" : "rejected");
                 }
               }}
               className={

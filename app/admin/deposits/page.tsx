@@ -282,7 +282,7 @@ export default function Deposits() {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.action && confirmDialog.depositId) {
-                  handleStatusChange(confirmDialog.depositId, confirmDialog.action);
+                  handleStatusChange(confirmDialog.depositId, confirmDialog.action === "approve" ? "approved" : "rejected");
                 }
               }}
               className={

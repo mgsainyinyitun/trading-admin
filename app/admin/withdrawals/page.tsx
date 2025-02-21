@@ -333,7 +333,7 @@ export default function Withdrawals() {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.action && confirmDialog.withdrawalId) {
-                  handleStatusChange(confirmDialog.withdrawalId, confirmDialog.action);
+                  handleStatusChange(confirmDialog.withdrawalId, confirmDialog.action === "approve" ? "approved" : confirmDialog.action === "complete" ? "completed" : "rejected");
                 }
               }}
               className={

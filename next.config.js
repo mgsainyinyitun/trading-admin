@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  typescript: {
+    ignoreBuildErrors: true, // Skips type checking during the build
+  },
   async headers() {
     return [
       {

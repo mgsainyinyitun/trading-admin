@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
     try {
-        const tradingSettings = await prisma.tradingSetting.findMany()
+        const tradingSettings = await prisma.tradingsetting.findMany()
         return NextResponse.json(tradingSettings)
     } catch (error) {
         console.error("Error fetching trading settings:", error)

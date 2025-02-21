@@ -12,7 +12,7 @@ export async function GET(req: Request) {
         }
 
         // Find and validate token
-        const verificationToken = await prisma.verificationToken.findUnique({
+        const verificationToken = await prisma.verificationtoken.findUnique({
             where: { token }
         });
 
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
         if (verificationToken.expiresAt < new Date()) {
             // Delete expired token
-            await prisma.verificationToken.delete({
+            await prisma.verificationtoken.delete({
                 where: { id: verificationToken.id }
             });
             return new Response('Verification link has expired', { status: 400 });
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
             });
 
             // Delete used token
-            await tx.verificationToken.delete({
+            await tx.verificationtoken.delete({
                 where: { id: verificationToken.id }
             });
         });

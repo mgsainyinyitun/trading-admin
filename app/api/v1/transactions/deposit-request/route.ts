@@ -94,6 +94,10 @@ export async function POST(request: NextRequest) {
             });
         }
 
+        if (!account) {
+            return NextResponse.json({ success: false, error: "Account not found" }, { status: 404, headers: getCorsHeaders(request.headers.get("origin") || "") })
+        }
+
 
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
@@ -121,7 +125,7 @@ export async function POST(request: NextRequest) {
                     amount: depositData.amount,
                     description: depositData.description,
                     status: "PENDING",
-                    accountId: account.id,
+                    accountId: account?.id,
                     updatedAt: new Date(),
                 },
             });

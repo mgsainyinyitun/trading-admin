@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
 
         // Save verification token
-        await prisma.verificationToken.create({
+        await prisma.verificationtoken.create({
             data: {
                 token,
                 email,
