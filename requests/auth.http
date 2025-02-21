@@ -1,5 +1,6 @@
 ### Variables for different environments
 @baseUrl = http://localhost:3000
+# @baseUrl = https://trading-admin-jade.vercel.app
 @authToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXN0b21lcklkIjoiMiIsImVtYWlsIjoic2FpbnlpQGdtYWlsLmNvbSIsImlhdCI6MTczOTgwNTEzOSwiZXhwIjoxNzM5ODkxNTM5fQ._c8aeH9sf-WEa8rUmOzTXQzYUuPsaW0LuUtPrsqNE7E
 @verificationToken = 
 
@@ -12,6 +13,10 @@ Content-Type: application/json
     "email": "sainyi@gmail.com",
     "password": "sainyi"
 }
+
+
+### Get Working
+GET {{baseUrl}}/api/v1/working
 
 ### Update authToken with login response
 @authToken = {{login.response.body.token}}
