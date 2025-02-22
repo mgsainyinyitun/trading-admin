@@ -104,18 +104,20 @@ export async function POST(req: Request) {
           password: hashedPassword,
           socialSecurityNumber,
           active: true,
+          updatedAt: new Date(),
           isActivated: false, // Requires email verification
-          accounts: {
+          account: {
             create: {
               accountNo: generateAccountNumber(),
               balance: 0,
               currency: "USDT",
-              isActive: true
+              isActive: true,
+              updatedAt: new Date(),
             }
           }
         },
         include: {
-          accounts: true
+          account: true
         }
       });
 
@@ -141,3 +143,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// "\nInvalid `prisma.customer.create()` invocation:\n\n{\n  data: {\n    email: \"newuser@example.com\",\n    name: \"New User\",\n    loginId: \"USR1740164232013347\",\n    phone: \"+1234567890\",\n    password: \"$2b$10$rIqE8668RAYujRATGBE1TuKDtA96QjMGPrQ2jtcZFuXpNuwvw9Ik2\",\n    socialSecurityNumber: \"123-45-6789\",\n    active: true,\n    updatedAt: new Date(\"2025-02-21T18:57:12.013Z\"),\n    isActivated: false,\n    account: {\n      create: {\n        accountNo: \"1740164232013329\",\n        balance: 0,\n        currency: \"USDT\",\n        isActive: true,\n        updatedAt: new Date(\"2025-02-21T18:57:12.013Z\")\n      }\n    }\n  },\n  include: {\n    accounts: true,\n    ~~~~~~~~\n?   account?: true,\n?   address?: true,\n?   trade?: true,\n?   winrate?: true\n  }\n}\n\nUnknown field `accounts` for include statement on model `customer`. Available options are marked with ?."

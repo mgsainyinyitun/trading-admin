@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        let account = accounts.find((account) => account.currency === depositData.currency);
+        let account = accounts.find((account) => (account.currency).toLocaleLowerCase() === (depositData.currency).toLocaleLowerCase());
         if (!account) {
             // create account for that curstomer with that currency
             account = await prisma.account.create({
@@ -128,6 +128,12 @@ export async function POST(request: NextRequest) {
                     accountId: account?.id,
                     updatedAt: new Date(),
                 },
+            });
+
+            // increment the inreview_balance
+            await tx.account.update({
+                where: { id: account.id },
+                data: { inreview_balance: { increment: depositData.amount } },
             });
 
             const transactionFile = await tx.transactionfile.create({
