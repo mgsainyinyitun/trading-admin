@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { signIn } from "next-auth/react";
+import { toast, Toaster } from "sonner";
 export default function AdminLogin() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -16,15 +17,28 @@ export default function AdminLogin() {
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - just store a dummy token and redirect
-    localStorage.setItem("admin_token", "mock_token");
-    router.push("/admin/dashboard");
+    try {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      router.push("/admin/dashboard");
+    } catch (error) {
+      toast.error("Login failed::" + error);
+      console.error("Login failed:", error);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <Toaster richColors position="top-center" />
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">

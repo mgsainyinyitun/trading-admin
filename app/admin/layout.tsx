@@ -3,10 +3,10 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  LogOut, 
-  LayoutDashboard, 
-  Users, 
+import {
+  LogOut,
+  LayoutDashboard,
+  Users,
   Settings,
   ChevronDown,
   Bell,
@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
+import { useSession } from "next-auth/react";
 
 interface AdminUser {
   id: string;
@@ -38,9 +39,9 @@ interface AdminUser {
 }
 
 const navigation = [
-  { 
-    name: 'Dashboard', 
-    href: '/admin/dashboard', 
+  {
+    name: 'Dashboard',
+    href: '/admin/dashboard',
     icon: LayoutDashboard
   },
   { name: 'Profile', href: '/admin/profile', icon: UserCircle },
@@ -58,21 +59,31 @@ export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
-}) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+}) 
+{
+  const { data: session, status } = useSession();
+  console.log("session::", session);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [notificationCount, setNotificationCount] = useState(3);
+
   const [user, setUser] = useState<AdminUser>({
     id: '1',
     name: 'Admin User',
     email: 'admin@example.com',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
   });
-  
+
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
+  if (!session) {
+    router.push('/login');
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -83,14 +94,15 @@ export default function AdminLayout({
     setIsAuthenticated(!!token);
     setIsLoading(false);
 
-    if (!token && !publicPaths.includes(pathname)) {
-      router.push('/admin/login');
-    }
+    // if (!token && !publicPaths.includes(pathname)) {
+    //   router.push('/login');
+    // }
+
   }, [pathname, router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    router.push('/admin/login');
+    // localStorage.removeItem("admin_token");
+    router.push('/login');
   };
 
   const toggleTheme = () => {
@@ -104,6 +116,8 @@ export default function AdminLayout({
   if (!isAuthenticated && publicPaths.includes(pathname)) {
     return <div className="min-h-screen bg-background">{children}</div>;
   }
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,11 +134,10 @@ export default function AdminLayout({
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${
-                  isActive
+                className={`flex items-center gap-2 px-3 py-2 rounded-md mb-1 text-sm font-medium transition-colors ${isActive
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
+                  }`}
               >
                 <Icon className="h-4 w-4" />
                 {item.name}
@@ -142,11 +155,11 @@ export default function AdminLayout({
           <div className="text-foreground">
             <h2 className="text-lg font-medium">Welcome back, {user.name}!</h2>
             <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </p>
           </div>
