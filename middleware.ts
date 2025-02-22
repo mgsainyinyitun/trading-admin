@@ -4,9 +4,9 @@ import { authenticateRequest } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
   // Redirect root /login to /admin/login
-  if (request.nextUrl.pathname === '/login') {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
-  }
+  // if (request.nextUrl.pathname === '/login') {
+  //   return NextResponse.redirect(new URL('/admin/login', request.url));
+  // }
 
   // Redirect /admin/customer to /admin/customers
   if (request.nextUrl.pathname === '/admin/customer') {

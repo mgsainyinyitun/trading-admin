@@ -72,6 +72,12 @@ export async function POST(req: Request) {
       email: customer.email,
     });
 
+    // update last login time
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { lastLoginTime: new Date() },
+    });
+
     return NextResponse.json({
       message: "Login successful",
       token,

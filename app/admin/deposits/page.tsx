@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -39,17 +39,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-
-interface Deposit {
-  id: string;
-  customerId: string;
-  customerName: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  method: string;
-  date: string;
-  reference: string;
-}
+import { getAllDeposits, updateDepositStatus } from "@/app/actions/transactionsActions";
+import { Deposit } from "@/type";
+import { transaction_status } from "@prisma/client";
 
 interface ConfirmationDialog {
   isOpen: boolean;
@@ -65,49 +57,31 @@ export default function Deposits() {
     depositId: "",
     action: null,
   });
-  const [deposits, setDeposits] = useState<Deposit[]>([
-    {
-      id: "1",
-      customerId: "C001",
-      customerName: "John Doe",
-      amount: 1000.00,
-      status: "pending",
-      method: "Bank Transfer",
-      date: "2024-03-20",
-      reference: "DEP001",
-    },
-    {
-      id: "2",
-      customerId: "C002",
-      customerName: "Jane Smith",
-      amount: 500.00,
-      status: "approved",
-      method: "Credit Card",
-      date: "2024-03-19",
-      reference: "DEP002",
-    },
-    {
-      id: "3",
-      customerId: "C003",
-      customerName: "Bob Johnson",
-      amount: 750.00,
-      status: "rejected",
-      method: "PayPal",
-      date: "2024-03-18",
-      reference: "DEP003",
-    },
-  ]);
 
-  const handleStatusChange = async (depositId: string, newStatus: 'approved' | 'rejected') => {
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
+
+  useEffect(() => {
+    const fetchDeposits = async () => {
+      const deposits = await getAllDeposits();
+      setDeposits(deposits as unknown as Deposit[]);
+    };
+    fetchDeposits();
+  }, []);
+
+  const handleStatusChange = async (depositId: string, newStatus: transaction_status) => {
     try {
-      setDeposits(deposits.map(deposit => 
-        deposit.id === depositId 
-          ? { ...deposit, status: newStatus }
+      const response = await updateDepositStatus(depositId, newStatus);
+      if (response.message) {
+        setDeposits(deposits.map(deposit =>
+          deposit.id === parseInt(depositId)
+            ? { ...deposit, status: newStatus }
           : deposit
-      ));
-      
-      toast.success(`Deposit ${newStatus} successfully`);
-      setConfirmDialog({ isOpen: false, depositId: "", action: null });
+        )); 
+        toast.success(`Deposit ${newStatus} successfully`);
+        setConfirmDialog({ isOpen: false, depositId: "", action: null });
+      } else {
+        toast.error("Failed to update deposit status");
+      }
     } catch (error) {
       toast.error("Failed to update deposit status");
     }
@@ -122,10 +96,11 @@ export default function Deposits() {
   };
 
   const getStatusBadge = (status: string) => {
+    console.log(status);
     const styles = {
-      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      COMPLETED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      FAILED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
   };
@@ -206,11 +181,11 @@ export default function Deposits() {
               <TableBody>
                 {filteredDeposits.map((deposit) => (
                   <TableRow key={deposit.id}>
-                    <TableCell className="font-medium">{deposit.reference}</TableCell>
+                    <TableCell className="font-medium">{deposit.transactionId}</TableCell>
                     <TableCell>{deposit.customerName}</TableCell>
                     <TableCell>${deposit.amount.toFixed(2)}</TableCell>
-                    <TableCell>{deposit.method}</TableCell>
-                    <TableCell>{new Date(deposit.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{deposit.type}</TableCell>
+                    <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Badge className={getStatusBadge(deposit.status)}>
                         {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
@@ -228,13 +203,13 @@ export default function Deposits() {
                             Details
                           </Button>
                         </Link>
-                        {deposit.status === "pending" && (
+                        {deposit.status === "PENDING" && (
                           <>
                             <Button
                               variant="outline"
                               size="sm"
                               className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                              onClick={() => openConfirmDialog(deposit.id, "approve")}
+                              onClick={() => openConfirmDialog(deposit.id.toString(), "approve")}
                             >
                               Approve
                             </Button>
@@ -242,7 +217,7 @@ export default function Deposits() {
                               variant="outline"
                               size="sm"
                               className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                              onClick={() => openConfirmDialog(deposit.id, "reject")}
+                              onClick={() => openConfirmDialog(deposit.id.toString(), "reject")}
                             >
                               Reject
                             </Button>
@@ -258,17 +233,17 @@ export default function Deposits() {
         </CardContent>
       </Card>
 
-      <AlertDialog 
-        open={confirmDialog.isOpen} 
-        onOpenChange={(isOpen) => 
+      <AlertDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={(isOpen) =>
           setConfirmDialog({ isOpen, depositId: "", action: null })
         }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog.action === "approve" 
-                ? "Approve Deposit" 
+              {confirmDialog.action === "approve"
+                ? "Approve Deposit"
                 : "Reject Deposit"}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -282,7 +257,7 @@ export default function Deposits() {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.action && confirmDialog.depositId) {
-                  handleStatusChange(confirmDialog.depositId, confirmDialog.action === "approve" ? "approved" : "rejected");
+                  handleStatusChange(confirmDialog.depositId, confirmDialog.action === "approve" ? "COMPLETED" : "FAILED");
                 }
               }}
               className={

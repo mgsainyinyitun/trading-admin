@@ -45,6 +45,7 @@ const navigation = [
   },
   { name: 'Profile', href: '/admin/profile', icon: UserCircle },
   { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Trading History', href: '/admin/trading-history', icon: RefreshCw },
   { name: 'Deposits', href: '/admin/deposits', icon: ArrowDownCircle },
   { name: 'Withdrawals', href: '/admin/withdrawals', icon: ArrowUpCircle },
   { name: 'Exchange', href: '/admin/exchange', icon: RefreshCw },

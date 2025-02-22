@@ -7,57 +7,63 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-interface Deposit {
-  id: string;
-  customerId: string;
-  customerName: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  method: string;
-  date: string;
-  reference: string;
-  proofImage: string;
-  bankName?: string;
-  accountNumber?: string;
-  accountName?: string;
-  notes?: string;
-}
+import { useEffect, useState } from "react";
+import { getTransactionById, updateDepositStatus } from "@/app/actions/transactionsActions";
+import { TransactionDetails } from "@/type";
+import { notFound } from "next/navigation"; // Import notFound from next/navigation
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { trade_tradingStatus, transaction_status } from "@prisma/client";
 
 export default function DepositDetail() {
   const params = useParams();
   const id = params.id as string;
+  const [deposit, setDeposit] = useState<TransactionDetails | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; action: 'approve' | 'reject' | null }>({ isOpen: false, action: null });
 
-  // Mock data - replace with API call
-  const deposit: Deposit = {
-    id,
-    customerId: "C001",
-    customerName: "John Doe",
-    amount: 1000.00,
-    status: "pending",
-    method: "Bank Transfer",
-    date: "2024-03-20",
-    reference: "DEP001",
-    proofImage: "https://images.unsplash.com/photo-1544377193-33dcf4d68fb5?auto=format&fit=crop&q=80&w=1000",
-    bankName: "Chase Bank",
-    accountNumber: "****1234",
-    accountName: "John Doe",
-    notes: "Payment for premium subscription"
-  };
+  useEffect(() => {
+    const fetchDeposit = async () => {
+      const deposit = await getTransactionById(id);
+      if (!deposit) {
+        notFound(); // Redirect to 404 if deposit is null
+      }
+      setDeposit(deposit);
+    };
+    fetchDeposit();
+  }, [id]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
       pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      failed: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
   };
+
+  const handleStatusChange = async (newStatus: transaction_status) => {
+    try {
+      const response = await updateDepositStatus(id, newStatus);
+      if (response.message) {
+        toast.success(`Deposit ${newStatus === 'COMPLETED' ? 'approved' : 'rejected'} successfully`);
+        setDeposit(prev => prev ? { ...prev, status: newStatus } : null);
+      } else {
+        toast.error("Failed to update deposit status");
+      }
+    } catch (error) {
+      toast.error("Failed to update deposit status");
+    }
+  };
+
+  const openConfirmDialog = (action: 'approve' | 'reject') => {
+    setConfirmDialog({ isOpen: true, action });
+  };
+
+  const amount = deposit?.amount ?? 0; // Default to 0 if undefined
 
   return (
     <div className="space-y-6">
@@ -71,10 +77,22 @@ export default function DepositDetail() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Deposit Details</h1>
             <p className="text-muted-foreground">
-              Reference: {deposit.reference}
+              Transaction ID: {deposit?.transactionId || "N/A"}
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="flex gap-4">
+        <Button variant="outline" disabled={deposit?.status === trade_tradingStatus.COMPLETED}>
+          {deposit?.status === trade_tradingStatus.COMPLETED ? 'Already Approved' : 'Approve'}
+        </Button>
+        <Button variant="outline" 
+                onClick={() => openConfirmDialog('reject')} 
+                className="bg-red-500 text-white" 
+                disabled={deposit?.status === trade_tradingStatus.FAILED}>
+          {deposit?.status === trade_tradingStatus.FAILED ? 'Already Rejected' : 'Reject'}
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -85,11 +103,11 @@ export default function DepositDetail() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Customer Name</p>
-              <p className="text-lg">{deposit.customerName}</p>
+              <p className="text-lg">{deposit?.customerName || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Customer ID</p>
-              <p className="text-lg">{deposit.customerId}</p>
+              <p className="text-lg">{deposit?.customerId || "N/A"}</p>
             </div>
           </CardContent>
         </Card>
@@ -101,21 +119,17 @@ export default function DepositDetail() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Amount</p>
-              <p className="text-lg">${deposit.amount.toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Method</p>
-              <p className="text-lg">{deposit.method}</p>
+              <p className="text-lg">${deposit?.amount?.toFixed(2) || "0.00"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <Badge className={getStatusBadge(deposit.status)}>
-                {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
+              <Badge className={getStatusBadge(deposit?.status || "pending")}>
+                {deposit?.status ? deposit?.status?.charAt(0).toUpperCase() + deposit?.status?.slice(1) : "Pending"}
               </Badge>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Date</p>
-              <p className="text-lg">{new Date(deposit.date).toLocaleDateString()}</p>
+              <p className="text-lg">{deposit?.createdAt ? new Date(deposit?.createdAt).toLocaleDateString() : "N/A"}</p>
             </div>
           </CardContent>
         </Card>
@@ -127,35 +141,56 @@ export default function DepositDetail() {
           <CardContent className="space-y-6">
             <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Bank Name</p>
-                <p className="text-lg">{deposit.bankName}</p>
-              </div>
-              <div>
                 <p className="text-sm font-medium text-muted-foreground">Account Number</p>
-                <p className="text-lg">{deposit.accountNumber}</p>
+                <p className="text-lg">{deposit?.accountNumber?.toString() || "N/A"}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Account Name</p>
-                <p className="text-lg">{deposit.accountName}</p>
+                <p className="text-sm font-medium text-muted-foreground">Account ID</p>
+                <p className="text-lg">{deposit?.accountId}</p>
               </div>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-2">Payment Proof</p>
-              <img
-                src={deposit.proofImage}
-                alt="Payment Proof"
-                className="rounded-lg max-w-md"
-              />
+              {deposit?.transactionfile.map(file => (
+                <img
+                  key={file.id}
+                  src={file.fileurl}
+                  alt={file.filename}
+                  className="rounded-lg max-w-md"
+                />
+              ))}
             </div>
-            {deposit.notes && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                <p className="text-lg">{deposit.notes}</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(isOpen) => setConfirmDialog({ isOpen, action: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.action === "approve" ? "Approve Deposit" : "Reject Deposit"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.action === "approve"
+                ? "Are you sure you want to approve this deposit? This action cannot be undone."
+                : "Are you sure you want to reject this deposit? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDialog.action) {
+                  handleStatusChange(confirmDialog.action === "approve" ? "COMPLETED" : "FAILED");
+                }
+              }}
+              className={confirmDialog.action === "approve" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+            >
+              {confirmDialog.action === "approve" ? "Approve" : "Reject"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

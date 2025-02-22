@@ -1,0 +1,121 @@
+import { address_type, trade_tradeType, trade_tradingStatus, transaction_status } from "@prisma/client";
+
+export interface Deposit {
+    id: number;  // Ensure this is a number
+    customerId: string;  // Adjust as necessary
+    customerName: string;
+    transactionId: string;  // Added transactionId
+    type: string;  // Added type
+    accountId: string;
+    createdAt: string;
+    updatedAt: string;
+    amount: number;  // Ensure amount is a number
+    status: transaction_status; //   PENDING COMPLETED FAILED REVERSED
+    accountNumber?: string;
+    accountName?: string;
+    notes?: string;
+}
+
+// transaction details
+export interface TransactionDetails {
+    id: number;
+    transactionId: string;
+    type: string;
+    amount: number;
+    description: string;
+    status: transaction_status;
+    accountId: string;
+    accountNumber: string;
+    customerId: string;
+    customerName: string;
+    createdAt: string;
+    updatedAt: string;
+    transactionfile: TransactionFile[];
+}
+
+// transaction file
+export interface TransactionFile {
+    id: number;
+    filename: string;
+    filetype: string;
+    fileurl: string;
+}
+
+export interface TradingHistory {
+    id: number;
+    customerId: string;
+    customerName: string;
+    accountId: number;
+    loginId: string;
+    accountNumber: string;
+    createdAt: string;
+    updatedAt: string;
+    tradeType: trade_tradeType;
+    period: number;
+    tradingStatus: trade_tradingStatus;
+    isSuccess: boolean;
+    tradeQuantity: number;
+}
+export interface Customer {
+    id: number;
+    email: string;
+    name: string;
+    phone?: string;
+    createdAt: string;
+    updatedAt: string;
+    active: boolean;
+    isActivated: boolean;
+    lastLoginTime?: string;
+    socialSecurityNumber?: string;
+    loginId: string;
+    account: Account[];
+    address: Address[];
+    trade: Trade[];
+}
+
+export interface Account {
+    id: number;
+    accountNo: string;
+    balance: number; // Ensure balance is a number
+    inreview_balance: number; // Ensure inreview_balance is a number
+    currency: string;
+    isActive: boolean;
+    customerId: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Address {
+    id: number;
+    type: address_type;
+    streetAddress: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    isDefault: boolean;
+    customerId: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Trade {
+    id: number;
+    customerId: number;
+    accountId: number;
+    tradeType: trade_tradeType;
+    period: number;
+    tradingStatus: trade_tradingStatus;
+    isSuccess?: boolean;
+    createdAt: string;
+    updatedAt: string;
+    tradeQuantity: number;
+}
+
+export interface WinRate {
+    id: number;
+    customerId: number;
+    winRate: number; // Ensure winRate is a number
+    createdAt: string;
+    updatedAt: string;
+}

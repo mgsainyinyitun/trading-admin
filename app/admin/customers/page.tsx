@@ -19,16 +19,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Edit2, Trash2, ExternalLink } from "lucide-react";
+import { Search, UserPlus, Trash2, ExternalLink, Edit } from "lucide-react"; // Added Edit icon
+import { getCustomers, getCustomerTransactions } from "@/app/actions/customerActions";
+import { Customer } from "@/type";
 
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  joinDate: string;
-  status: "active" | "inactive";
-}
 
 export default function CustomerList() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -36,36 +30,13 @@ export default function CustomerList() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockCustomers: Customer[] = [
-      {
-        id: "1",
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "+1 234-567-8901",
-        joinDate: "2024-01-15",
-        status: "active",
-      },
-      {
-        id: "2",
-        name: "Jane Smith",
-        email: "jane@example.com",
-        phone: "+1 234-567-8902",
-        joinDate: "2024-01-14",
-        status: "active",
-      },
-      {
-        id: "3",
-        name: "Bob Johnson",
-        email: "bob@example.com",
-        phone: "+1 234-567-8903",
-        joinDate: "2024-01-13",
-        status: "inactive",
-      },
-    ];
-
-    setCustomers(mockCustomers);
-    setIsLoading(false);
+    const fetchCustomers = async () => {
+      const customers = await getCustomers();
+      console.log(customers);
+      setCustomers(customers); // Set the fetched customers
+      setIsLoading(false);
+    };
+    fetchCustomers();
   }, []);
 
   const filteredCustomers = customers.filter((customer) =>
@@ -74,25 +45,24 @@ export default function CustomerList() {
     )
   );
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this customer?")) {
       try {
-        const response = await fetch(`/api/customer/${id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-        });
-
-        if (response.ok) {
-          setCustomers(customers.filter((customer) => customer.id !== id));
-        } else {
-          console.error("Failed to delete customer");
-        }
+        // const response = await deleteCustomer(id);
+        // if (response.ok) {
+        //   setCustomers(customers.filter((customer) => customer.id !== id));
+        // } else {
+        //   console.error("Failed to delete customer");
+        // }
       } catch (error) {
         console.error("Error deleting customer:", error);
       }
     }
+  };
+
+  const handleToggleActive = async (id: number, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    // Update the customer's active status in the database
   };
 
   return (
@@ -131,19 +101,22 @@ export default function CustomerList() {
                   <TableHead>Phone</TableHead>
                   <TableHead>Join Date</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>No. of Accounts</TableHead> {/* New column for number of accounts */}
+                  <TableHead>Last Login Time</TableHead> {/* New column for last login time */}
+                  <TableHead>Login ID</TableHead> {/* New column for login ID */}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
+                    <TableCell colSpan={9} className="text-center py-10">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
+                    <TableCell colSpan={9} className="text-center py-10">
                       No customers found
                     </TableCell>
                   </TableRow>
@@ -156,18 +129,26 @@ export default function CustomerList() {
                       <TableCell>{customer.email}</TableCell>
                       <TableCell>{customer.phone}</TableCell>
                       <TableCell>
-                        {new Date(customer.joinDate).toLocaleDateString()}
+                        {new Date(customer.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            customer.status === "active"
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${customer.active
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
-                          }`}
+                            }`}
                         >
-                          {customer.status}
+                          {customer.active ? "Active" : "Inactive"}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {customer.account.length} {/* Display the number of accounts */}
+                      </TableCell>
+                      <TableCell>
+                        {customer.lastLoginTime ? new Date(customer.lastLoginTime).toLocaleString() : 'N/A'} {/* Display last login time */}
+                      </TableCell>
+                      <TableCell>
+                        {customer.loginId} {/* Display login ID */}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -181,14 +162,16 @@ export default function CustomerList() {
                               Details
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            title="Edit customer"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
+                          <Link href={`/admin/customers/edit/${customer.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Edit customer"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="icon"
