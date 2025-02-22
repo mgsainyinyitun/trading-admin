@@ -8,18 +8,18 @@ datasource db {
 }
 
 model account {
-  id          Int           @id @default(autoincrement())
-  accountNo   String        @unique(map: "Account_accountNo_key")
-  balance     Decimal       @default(0.00) @db.Decimal(15, 2)
-  inreview_balance     Decimal       @default(0.00) @db.Decimal(15, 2)
-  currency    String        @default("USDT")
-  isActive    Boolean       @default(true)
-  customerId  Int
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now())
-  customer    customer      @relation(fields: [customerId], references: [id], map: "Account_customerId_fkey")
-  trade       trade[]
-  transaction transaction[]
+  id               Int           @id @default(autoincrement())
+  accountNo        String        @unique(map: "Account_accountNo_key")
+  balance          Decimal       @default(0.00) @db.Decimal(15, 2)
+  inreview_balance Decimal       @default(0.00) @db.Decimal(15, 2)
+  currency         String        @default("USDT")
+  isActive         Boolean       @default(true)
+  customerId       Int
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now())
+  customer         customer      @relation(fields: [customerId], references: [id], map: "Account_customerId_fkey")
+  trade            trade[]
+  transaction      transaction[]
 
   @@index([accountNo], map: "Account_accountNo_idx")
   @@index([customerId], map: "Account_customerId_idx")
@@ -120,6 +120,9 @@ model transaction {
   transactionId   String             @unique(map: "Transaction_transactionId_key")
   type            transaction_type
   amount          Decimal            @db.Decimal(15, 2)
+  address         String?
+  sent            Boolean            @default(false)
+  currency        String?
   description     String?
   status          transaction_status @default(PENDING)
   accountId       Int

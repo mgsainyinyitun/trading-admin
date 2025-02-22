@@ -15,7 +15,8 @@ export const depositSchema = z.object({
 
 // Validation schema for withdrawal request
 export const withdrawalSchema = z.object({
-    accountNo: z.string().min(1, "Account number is required"),
+    address: z.string().min(1, "Address is required"),
+    currency: z.string(),
     amount: z.string().or(z.number()).transform((val) => {
         const amount = typeof val === "string" ? parseFloat(val) : val;
         if (isNaN(amount) || amount <= 0) {

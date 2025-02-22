@@ -38,8 +38,9 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-    "accountNo": "1739629409954958",
-    "amount": 50.00,
+    "address": "1739629409954958",
+    "currency": "USDT",
+    "amount": 5.00,  
     "description": "Withdrawal for savings"
 }
 
