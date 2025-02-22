@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateCustomer } from "@/middleware/authMiddleware";
 
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
     try {
         const auth = await authenticateCustomer(req);

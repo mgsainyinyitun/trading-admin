@@ -119,3 +119,22 @@ export interface WinRate {
     createdAt: string;
     updatedAt: string;
 }
+
+
+export interface Withdrawal {
+    id: number;
+    transactionId: string;
+    type: string;
+    amount: number;
+    address: string;
+    sent: boolean;
+    currency: string;
+    status: transaction_status;
+    accountId: number;
+    accountNumber: string;
+    createdAt: string;
+    updatedAt: string;
+    customerId: number;
+    customerName: string;
+}
+

@@ -15,6 +15,9 @@ export async function GET(req: NextRequest) {
   const accounts = await prisma.account.findMany({
     where: {
       customerId: Number(customer.id)
+    },
+    orderBy: {
+      createdAt: "desc"
     }
   })
 
@@ -24,6 +27,9 @@ export async function GET(req: NextRequest) {
     const accountTransactions = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
+      },
+      orderBy: {
+        createdAt: "desc"
       }
     })
     transactions.push(...accountTransactions)

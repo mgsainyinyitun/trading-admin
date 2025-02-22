@@ -22,6 +22,9 @@ export async function GET(req: NextRequest) {
                     accountNo: true
                 }
             }
+        },	
+        orderBy: {
+            createdAt: "desc"
         }
     });
     return NextResponse.json(accountTransactions);
