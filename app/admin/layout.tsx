@@ -53,8 +53,6 @@ const navigation = [
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
-const publicPaths = ['/admin/login', '/admin/register'];
-
 export default function AdminLayout({
   children,
 }: {

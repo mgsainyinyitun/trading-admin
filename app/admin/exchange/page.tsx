@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Table,
@@ -38,29 +38,19 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, ExternalLink } from "lucide-react";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
+import { Exchange as ExchangeType } from "@/type";
+import { exchange_status } from "@prisma/client";
+import { changeExchangeStatus, getExchanges } from "@/app/actions/exchangeActions";
 
-interface Exchange {
-  id: string;
-  customerId: string;
-  customerName: string;
-  fromAmount: number;
-  fromCoin: string;
-  toAmount: number;
-  toCoin: string;
-  status: 'pending' | 'completed' | 'rejected';
-  date: string;
-  reference: string;
-  rate: number;
-}
 
 interface ConfirmationDialog {
   isOpen: boolean;
   exchangeId: string;
-  action: 'complete' | 'reject' | null;
+  action: 'APPROVE' | 'REJECT' | null;
 }
 
-export default function Exchange() {
+export default function () {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({
@@ -68,56 +58,36 @@ export default function Exchange() {
     exchangeId: "",
     action: null,
   });
-  const [exchanges, setExchanges] = useState<Exchange[]>([
-    {
-      id: "1",
-      customerId: "C001",
-      customerName: "John Doe",
-      fromAmount: 1.5,
-      fromCoin: "BTC",
-      toAmount: 25.5,
-      toCoin: "ETH",
-      status: "pending",
-      date: "2024-03-20",
-      reference: "EX001",
-      rate: 17,
-    },
-    {
-      id: "2",
-      customerId: "C002",
-      customerName: "Jane Smith",
-      fromAmount: 1000,
-      fromCoin: "USDT",
-      toAmount: 0.5,
-      toCoin: "BTC",
-      status: "completed",
-      date: "2024-03-19",
-      reference: "EX002",
-      rate: 0.0005,
-    },
-    {
-      id: "3",
-      customerId: "C003",
-      customerName: "Bob Johnson",
-      fromAmount: 10,
-      fromCoin: "ETH",
-      toAmount: 15000,
-      toCoin: "USDT",
-      status: "rejected",
-      date: "2024-03-18",
-      reference: "EX003",
-      rate: 1500,
-    },
-  ]);
+  const [exchanges, setExchanges] = useState<ExchangeType[]>([]);
 
-  const handleStatusChange = async (exchangeId: string, newStatus: 'completed' | 'rejected') => {
+  useEffect(() => {
+    const fetchExchanges = async () => {
+      const exchanges = await getExchanges();
+      console.log("exchanges::", exchanges);
+      if (exchanges === null) {
+        toast.error("Failed to fetch exchanges");
+      } else {
+        setExchanges(exchanges as ExchangeType[]);
+      }
+    };
+    fetchExchanges();
+  }, []);
+
+  const handleStatusChange = async (exchangeId: string, newStatus: exchange_status) => {
     try {
-      setExchanges(exchanges.map(exchange => 
-        exchange.id === exchangeId 
-          ? { ...exchange, status: newStatus }
+      const updatedExchange = await changeExchangeStatus(parseInt(exchangeId), newStatus);
+      if (!updatedExchange) {
+        toast.error("Failed to update exchange status");
+        return;
+      }
+
+      setExchanges(exchanges.map(exchange =>
+        exchange.id === parseInt(exchangeId)
+          ? { ...exchange, exchangeStatus: newStatus }
           : exchange
       ));
       
+      console.log("newStatus::", newStatus);
       toast.success(`Exchange ${newStatus} successfully`);
       setConfirmDialog({ isOpen: false, exchangeId: "", action: null });
     } catch (error) {
@@ -125,7 +95,7 @@ export default function Exchange() {
     }
   };
 
-  const openConfirmDialog = (exchangeId: string, action: 'complete' | 'reject') => {
+  const openConfirmDialog = (exchangeId: string, action: 'APPROVE' | 'REJECT') => {
     setConfirmDialog({
       isOpen: true,
       exchangeId,
@@ -135,9 +105,9 @@ export default function Exchange() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      "PENDING": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      "APPROVED": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      "REJECTED": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
   };
@@ -157,12 +127,13 @@ export default function Exchange() {
     const matchesSearch = Object.values(exchange).some(value =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const matchesStatus = statusFilter === "all" || exchange.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || exchange.exchangeStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="space-y-6">
+      <Toaster richColors position="top-center" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Exchange Management</h1>
@@ -205,9 +176,9 @@ export default function Exchange() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -217,7 +188,7 @@ export default function Exchange() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Reference</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>From</TableHead>
                   <TableHead>To</TableHead>
@@ -230,21 +201,23 @@ export default function Exchange() {
               <TableBody>
                 {filteredExchanges.map((exchange) => (
                   <TableRow key={exchange.id}>
-                    <TableCell className="font-medium">{exchange.reference}</TableCell>
+                    <TableCell className="font-medium">
+                      {exchange.exchangeType}
+                    </TableCell>
                     <TableCell>{exchange.customerName}</TableCell>
                     <TableCell>
-                      {exchange.fromAmount} {exchange.fromCoin}
+                      {exchange.amount} {exchange.fromCurrency}
                     </TableCell>
                     <TableCell>
-                      {exchange.toAmount} {exchange.toCoin}
+                      {exchange.exchangedAmount} {exchange.toCurrency}
                     </TableCell>
                     <TableCell>
-                      1 {exchange.fromCoin} = {exchange.rate} {exchange.toCoin}
+                      1 {exchange.fromCurrency} = {exchange.exchangeRate} {exchange.toCurrency}
                     </TableCell>
-                    <TableCell>{new Date(exchange.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(exchange.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Badge className={getStatusBadge(exchange.status)}>
-                        {exchange.status.charAt(0).toUpperCase() + exchange.status.slice(1)}
+                      <Badge className={getStatusBadge(exchange.exchangeStatus)}>
+                        {exchange.exchangeStatus.charAt(0).toUpperCase() + exchange.exchangeStatus.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -259,21 +232,21 @@ export default function Exchange() {
                             Details
                           </Button>
                         </Link>
-                        {exchange.status === "pending" && (
+                        {exchange.exchangeStatus === "PENDING" && (
                           <>
                             <Button
                               variant="outline"
                               size="sm"
                               className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                              onClick={() => openConfirmDialog(exchange.id, "complete")}
+                              onClick={() => openConfirmDialog(exchange.id.toString(), "APPROVE")}
                             >
-                              Complete
+                              Approve
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                              onClick={() => openConfirmDialog(exchange.id, "reject")}
+                              onClick={() => openConfirmDialog(exchange.id.toString(), "REJECT")}
                             >
                               Reject
                             </Button>
@@ -289,17 +262,17 @@ export default function Exchange() {
         </CardContent>
       </Card>
 
-      <AlertDialog 
-        open={confirmDialog.isOpen} 
-        onOpenChange={(isOpen) => 
+      <AlertDialog
+        open={confirmDialog.isOpen}
+        onOpenChange={(isOpen) =>
           setConfirmDialog({ isOpen, exchangeId: "", action: null })
         }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog.action === "complete" 
-                ? "Complete Exchange" 
+              {confirmDialog.action === "APPROVE"
+                ? "Complete Exchange"
                 : "Reject Exchange"}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -311,16 +284,16 @@ export default function Exchange() {
             <AlertDialogAction
               onClick={() => {
                 if (confirmDialog.action && confirmDialog.exchangeId) {
-                  handleStatusChange(confirmDialog.exchangeId, confirmDialog.action === "complete" ? "completed" : "rejected");
+                  handleStatusChange(confirmDialog.exchangeId, confirmDialog.action === "APPROVE" ? "APPROVED" : "REJECTED");
                 }
               }}
               className={
-                confirmDialog.action === "complete"
+                confirmDialog.action === "APPROVE"
                   ? "bg-green-600 hover:bg-green-700"
                   : "bg-red-600 hover:bg-red-700"
               }
             >
-              {confirmDialog.action === "complete" ? "Complete" : "Reject"}
+              {confirmDialog.action === "APPROVE" ? "Complete" : "Reject"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

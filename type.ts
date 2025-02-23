@@ -1,4 +1,4 @@
-import { address_type, trade_tradeType, trade_tradingStatus, transaction_status } from "@prisma/client";
+import { address_type, exchange_status, exchange_type, trade_tradeType, trade_tradingStatus, transaction_status } from "@prisma/client";
 
 export interface Deposit {
     id: number;  // Ensure this is a number
@@ -136,5 +136,21 @@ export interface Withdrawal {
     updatedAt: string;
     customerId: number;
     customerName: string;
+}
+export interface Exchange {
+    id: number;
+    fromCurrency: string;
+    toCurrency: string;
+    fromAccountNo: string;
+    toAccountNo: string;
+    amount: number; // Ensure amount is a number
+    exchangedAmount: number; // Ensure exchangedAmount is a number
+    exchangeRate: number; // Ensure exchangeRate is a number
+    customerId: number;
+    customerName: string;
+    exchangeStatus: exchange_status;
+    exchangeType: exchange_type;
+    createdAt: string;
+    updatedAt: string;
 }
 

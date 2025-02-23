@@ -21,7 +21,7 @@ export default function AdminRegister() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock registration - just redirect to login
-    router.push("/admin/login");
+    router.push("/login");
   };
 
   return (
@@ -91,7 +91,7 @@ export default function AdminRegister() {
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/admin/login" className="text-primary hover:underline">
+              <Link href="/login" className="text-primary hover:underline">
                 Login
               </Link>
             </p>

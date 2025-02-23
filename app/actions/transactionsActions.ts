@@ -227,4 +227,37 @@ export async function markWithdrawalAsSent(withdrawalId: string) {
         console.error(error)
         return { message: "Failed to mark withdrawal as sent" }
     }
-}   
+}
+
+// get withdrawal by id
+export async function getWithdrawalById(withdrawalId: string): Promise<Withdrawal | null> {
+    const withdrawal = await prisma.transaction.findUnique({
+        where: { id: parseInt(withdrawalId) },
+        include: {
+            account: {
+                include: {
+                    customer: true,
+                },
+            },
+        },
+    });
+    if (!withdrawal) {
+        return null
+    }
+    return {
+        id: withdrawal.id,
+        transactionId: withdrawal.transactionId,
+        type: withdrawal.type,
+        amount: parseFloat(withdrawal.amount.toString()),
+        address: withdrawal.address || "",
+        sent: withdrawal.sent || false,
+        currency: withdrawal.currency || "",
+        status: withdrawal.status,
+        accountId: withdrawal.accountId,
+        accountNumber: withdrawal.account.accountNo,
+        createdAt: withdrawal.createdAt.toISOString(),
+        updatedAt: withdrawal.updatedAt.toISOString(),
+        customerId: withdrawal.account.customer.id,
+        customerName: withdrawal.account.customer.name,
+    }
+}
