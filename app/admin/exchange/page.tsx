@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, ExternalLink } from "lucide-react";
+import { Search, Filter, ExternalLink, Loader2 } from "lucide-react"; // Added Loader2 for loading indicator
 import { toast, Toaster } from "sonner";
 import { Exchange as ExchangeType } from "@/type";
 import { exchange_status } from "@prisma/client";
@@ -59,9 +59,11 @@ export default function () {
     action: null,
   });
   const [exchanges, setExchanges] = useState<ExchangeType[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   useEffect(() => {
     const fetchExchanges = async () => {
+      setIsLoading(true); // Set loading to true when fetching starts
       const exchanges = await getExchanges();
       console.log("exchanges::", exchanges);
       if (exchanges === null) {
@@ -69,6 +71,7 @@ export default function () {
       } else {
         setExchanges(exchanges as ExchangeType[]);
       }
+      setIsLoading(false); // Set loading to false after fetching
     };
     fetchExchanges();
   }, []);
@@ -199,63 +202,73 @@ export default function () {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredExchanges.map((exchange) => (
-                  <TableRow key={exchange.id}>
-                    <TableCell className="font-medium">
-                      {exchange.exchangeType}
-                    </TableCell>
-                    <TableCell>{exchange.customerName}</TableCell>
-                    <TableCell>
-                      {exchange.amount} {exchange.fromCurrency}
-                    </TableCell>
-                    <TableCell>
-                      {exchange.exchangedAmount} {exchange.toCurrency}
-                    </TableCell>
-                    <TableCell>
-                      1 {exchange.fromCurrency} = {exchange.exchangeRate} {exchange.toCurrency}
-                    </TableCell>
-                    <TableCell>{new Date(exchange.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadge(exchange.exchangeStatus)}>
-                        {exchange.exchangeStatus.charAt(0).toUpperCase() + exchange.exchangeStatus.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/admin/exchange/${exchange.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-1"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Details
-                          </Button>
-                        </Link>
-                        {exchange.exchangeStatus === "PENDING" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                              onClick={() => openConfirmDialog(exchange.id.toString(), "APPROVE")}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                              onClick={() => openConfirmDialog(exchange.id.toString(), "REJECT")}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
+                {isLoading ? ( // Check if loading
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-10">
+                      <div className="flex justify-center items-center h-full w-full">
+                        <Loader2 className="h-10 w-10 animate-spin" />
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredExchanges.map((exchange) => (
+                    <TableRow key={exchange.id}>
+                      <TableCell className="font-medium">
+                        {exchange.exchangeType}
+                      </TableCell>
+                      <TableCell>{exchange.customerName}</TableCell>
+                      <TableCell>
+                        {exchange.amount} {exchange.fromCurrency}
+                      </TableCell>
+                      <TableCell>
+                        {exchange.exchangedAmount} {exchange.toCurrency}
+                      </TableCell>
+                      <TableCell>
+                        1 {exchange.fromCurrency} = {exchange.exchangeRate} {exchange.toCurrency}
+                      </TableCell>
+                      <TableCell>{new Date(exchange.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadge(exchange.exchangeStatus)}>
+                          {exchange.exchangeStatus.charAt(0).toUpperCase() + exchange.exchangeStatus.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/admin/exchange/${exchange.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Details
+                            </Button>
+                          </Link>
+                          {exchange.exchangeStatus === "PENDING" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                                onClick={() => openConfirmDialog(exchange.id.toString(), "APPROVE")}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                onClick={() => openConfirmDialog(exchange.id.toString(), "REJECT")}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

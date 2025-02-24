@@ -154,3 +154,21 @@ export interface Exchange {
     updatedAt: string;
 }
 
+export interface Admin {
+    id: number;
+    email: string;
+    name: string;
+    phone?: string;
+    createdAt: string;
+    updatedAt: string;
+    avatar?: string;
+}
+
+// id        Int      @id @default(autoincrement())
+// loginId   String   @unique(map: "Admin_loginId_key") @db.Char(8)
+// email     String   @unique(map: "Admin_email_key")
+// name      String?
+// phone     String
+// password  String
+// createdAt DateTime @default(now())
+// updatedAt DateTime

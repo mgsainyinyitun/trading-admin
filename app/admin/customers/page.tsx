@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserPlus, Trash2, ExternalLink, Edit } from "lucide-react"; // Added Edit icon
+import { Search, UserPlus, Trash2, ExternalLink, Edit, Loader2 } from "lucide-react"; // Added Edit icon
 import { getCustomers, getCustomerTransactions } from "@/app/actions/customerActions";
 import { Customer } from "@/type";
 
@@ -111,7 +111,9 @@ export default function CustomerList() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-10">
-                      Loading...
+                      <div className="flex justify-center items-center h-full w-full">
+                        <Loader2 className="h-10 w-10 animate-spin" />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredCustomers.length === 0 ? (

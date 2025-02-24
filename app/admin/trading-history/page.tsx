@@ -14,6 +14,7 @@ import { TradingHistory } from "@/type"; // Import the TradingHistory type
 import { getAllTrading } from "@/app/actions/tradingActions";
 import { Badge } from "@/components/ui/badge"; // Import Badge for chip design
 import { Input } from "@/components/ui/input"; // Import Input for filtering
+import { Loader2 } from "lucide-react"; // Import Loader for loading indicator
 
 const getTradeTypeColor = (tradeType: string) => {
     return tradeType === "LONG" ? "bg-green-100 text-green-600" : tradeType === "SHORT" ? "bg-red-100 text-red-600" : "";
@@ -34,12 +35,15 @@ export default function TradingHistoryPage() {
     const [tradeTypeFilter, setTradeTypeFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [tradingStatusFilter, setTradingStatusFilter] = useState("");
+    const [isLoading, setIsLoading] = useState(true); // State to manage loading
 
     useEffect(() => {
         const fetchTradingHistory = async () => {
+            setIsLoading(true); // Set loading to true when fetching starts
             const history = await getAllTrading();
             setTradingHistory(history as TradingHistory[]);
             setFilteredHistory(history as TradingHistory[]);
+            setIsLoading(false); // Set loading to false after fetching
         };
         fetchTradingHistory();
     }, []);
@@ -86,48 +90,54 @@ export default function TradingHistoryPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Customer ID</TableHead>
-                                <TableHead>Customer Name</TableHead>
-                                <TableHead>Account Number</TableHead>
-                                <TableHead>Trade Type</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Condition</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Period</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredHistory.map((trade) => (
-                                <TableRow key={trade.id}>
-                                    <TableCell>{trade.customerId}</TableCell>
-                                    <TableCell>{trade.customerName}</TableCell>
-                                    <TableCell>{trade.accountNumber}</TableCell>
-                                    <TableCell>
-                                        <Badge className={getTradeTypeColor(trade.tradeType)}>
-                                            {trade.tradeType}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{trade.tradeQuantity} USDT</TableCell>
-                                    <TableCell>
-                                        <Badge className={getStatusColor(trade.isSuccess)}>
-                                            {trade.isSuccess ? "WIN" : "LOSE"}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge className={getTradingStatusColor(trade.tradingStatus)}>
-                                            {trade.tradingStatus}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{new Date(trade.createdAt).toLocaleDateString()}</TableCell>
-                                    <TableCell>{trade.period} Sec</TableCell>
+                    {isLoading ? ( // Check if loading
+                        <div className="flex justify-center items-center py-10">
+                            <Loader2 className="h-10 w-10 animate-spin" />
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Customer ID</TableHead>
+                                    <TableHead>Customer Name</TableHead>
+                                    <TableHead>Account Number</TableHead>
+                                    <TableHead>Trade Type</TableHead>
+                                    <TableHead>Quantity</TableHead>
+                                    <TableHead>Condition</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Period</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredHistory.map((trade) => (
+                                    <TableRow key={trade.id}>
+                                        <TableCell>{trade.customerId}</TableCell>
+                                        <TableCell>{trade.customerName}</TableCell>
+                                        <TableCell>{trade.accountNumber}</TableCell>
+                                        <TableCell>
+                                            <Badge className={getTradeTypeColor(trade.tradeType)}>
+                                                {trade.tradeType}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{trade.tradeQuantity} USDT</TableCell>
+                                        <TableCell>
+                                            <Badge className={getStatusColor(trade.isSuccess)}>
+                                                {trade.isSuccess ? "WIN" : "LOSE"}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge className={getTradingStatusColor(trade.tradingStatus)}>
+                                                {trade.tradingStatus}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{new Date(trade.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell>{trade.period} Sec</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
                 </CardContent>
             </Card>
         </div>

@@ -52,7 +52,7 @@ model admin {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime
-
+  avatar    String?
   @@index([loginId], map: "Admin_loginId_idx")
 }
 

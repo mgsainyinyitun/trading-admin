@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, ExternalLink } from "lucide-react";
+import { Search, Filter, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getAllDeposits, updateDepositStatus } from "@/app/actions/transactionsActions";
 import { Deposit } from "@/type";
@@ -59,11 +59,13 @@ export default function Deposits() {
   });
 
   const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
   useEffect(() => {
     const fetchDeposits = async () => {
       const deposits = await getAllDeposits();
       setDeposits(deposits as unknown as Deposit[]);
+      setIsLoading(false); // Set loading to false after fetching
     };
     fetchDeposits();
   }, []);
@@ -96,7 +98,6 @@ export default function Deposits() {
   };
 
   const getStatusBadge = (status: string) => {
-    console.log(status);
     const styles = {
       PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       COMPLETED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -179,54 +180,64 @@ export default function Deposits() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDeposits.map((deposit) => (
-                  <TableRow key={deposit.id}>
-                    <TableCell className="font-medium">{deposit.transactionId}</TableCell>
-                    <TableCell>{deposit.customerName}</TableCell>
-                    <TableCell>${deposit.amount.toFixed(2)}</TableCell>
-                    <TableCell>{deposit.type}</TableCell>
-                    <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadge(deposit.status)}>
-                        {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/admin/deposits/${deposit.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-1"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Details
-                          </Button>
-                        </Link>
-                        {deposit.status === "PENDING" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                              onClick={() => openConfirmDialog(deposit.id.toString(), "approve")}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                              onClick={() => openConfirmDialog(deposit.id.toString(), "reject")}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
+                {isLoading ? ( // Check if loading
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10">
+                      <div className="flex justify-center items-center h-full w-full">
+                        <Loader2 className="h-10 w-10 animate-spin" />
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredDeposits.map((deposit) => (
+                    <TableRow key={deposit.id}>
+                      <TableCell className="font-medium">{deposit.transactionId}</TableCell>
+                      <TableCell>{deposit.customerName}</TableCell>
+                      <TableCell>${deposit.amount.toFixed(2)}</TableCell>
+                      <TableCell>{deposit.type}</TableCell>
+                      <TableCell>{new Date(deposit.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadge(deposit.status)}>
+                          {deposit.status.charAt(0).toUpperCase() + deposit.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/admin/deposits/${deposit.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Details
+                            </Button>
+                          </Link>
+                          {deposit.status === "PENDING" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                                onClick={() => openConfirmDialog(deposit.id.toString(), "approve")}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                onClick={() => openConfirmDialog(deposit.id.toString(), "reject")}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

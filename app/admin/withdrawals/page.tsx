@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Copy, ExternalLink } from "lucide-react";
+import { Search, Filter, Copy, ExternalLink, Loader2 } from "lucide-react"; // Added Loader2 for loading indicator
 import { toast, Toaster } from "sonner";
 import { Withdrawal } from "@/type";
 import { transaction_status } from "@prisma/client";
@@ -59,12 +59,14 @@ export default function Withdrawals() {
     action: null,
   });
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false); // Added loading state
 
   useEffect(() => {
     const fetchDeposits = async () => {
+      setIsLoading(true); // Set loading to true when fetching starts
       const withdrawals = await getAllWithdrawals();
       setWithdrawals(withdrawals as unknown as Withdrawal[]);
+      setIsLoading(false); // Set loading to false after fetching
     };
     fetchDeposits();
   }, []);
@@ -201,99 +203,105 @@ export default function Withdrawals() {
             </div>
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Sent</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Account Number</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredWithdrawals.map((withdrawal) => (
-                  <TableRow key={withdrawal.id}>
-                    <TableCell className="font-medium">{withdrawal.transactionId}</TableCell>
-                    <TableCell>{withdrawal.type}</TableCell>
-                    <TableCell>{withdrawal.amount} {withdrawal.currency}</TableCell>
-                    <TableCell className="flex items-center">
-                      <span>{formatAddress(withdrawal.address)}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="ml-2"
-                        onClick={() => copyToClipboard(withdrawal.address)}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                    <TableCell>{withdrawal.sent ? "Yes" : "No"}</TableCell>
-                    <TableCell>{withdrawal.currency}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusBadge(withdrawal.status)}>
-                        {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{withdrawal.accountNumber}</TableCell>
-                    <TableCell>{new Date(withdrawal.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{withdrawal.customerName}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/admin/withdrawals/${withdrawal.id}`}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-1"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Details
-                          </Button>
-                        </Link>
-                        {withdrawal.status === transaction_status.PENDING && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
-                              onClick={() => openConfirmDialog(withdrawal.id.toString(), "approve")}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
-                              onClick={() => openConfirmDialog(withdrawal.id.toString(), "reject")}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        {withdrawal.status === transaction_status.COMPLETED && !withdrawal.sent && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
-                            onClick={() => openConfirmDialog(withdrawal.id.toString(), "markAsSent")}
-                          >
-                            Mark as Sent
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+          {isLoading ? ( // Show loading indicator while fetching
+            <div className="flex justify-center items-center">
+              <Loader2 className="animate-spin h-6 w-6 text-gray-500" />
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Sent</TableHead>
+                    <TableHead>Currency</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Account Number</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Customer Name</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredWithdrawals.map((withdrawal) => (
+                    <TableRow key={withdrawal.id}>
+                      <TableCell className="font-medium">{withdrawal.transactionId}</TableCell>
+                      <TableCell>{withdrawal.type}</TableCell>
+                      <TableCell>{withdrawal.amount} {withdrawal.currency}</TableCell>
+                      <TableCell className="flex items-center">
+                        <span>{formatAddress(withdrawal.address)}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() => copyToClipboard(withdrawal.address)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>{withdrawal.sent ? "Yes" : "No"}</TableCell>
+                      <TableCell>{withdrawal.currency}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadge(withdrawal.status)}>
+                          {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{withdrawal.accountNumber}</TableCell>
+                      <TableCell>{new Date(withdrawal.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>{withdrawal.customerName}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/admin/withdrawals/${withdrawal.id}`}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Details
+                            </Button>
+                          </Link>
+                          {withdrawal.status === transaction_status.PENDING && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700"
+                                onClick={() => openConfirmDialog(withdrawal.id.toString(), "approve")}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                onClick={() => openConfirmDialog(withdrawal.id.toString(), "reject")}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {withdrawal.status === transaction_status.COMPLETED && !withdrawal.sent && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                              onClick={() => openConfirmDialog(withdrawal.id.toString(), "markAsSent")}
+                            >
+                              Mark as Sent
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
