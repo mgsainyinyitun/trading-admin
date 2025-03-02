@@ -11,7 +11,7 @@ Content-Type: application/json
 
 {
     "email": "sainyi@gmail.com",
-    "password": "sainyi"
+    "password": "sainyinyitun"
 }
 
 
@@ -73,3 +73,18 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 
+### Get Customer Assets
+GET {{baseUrl}}/api/v1/customer/coin/balance?currency=usdt
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+
+### change password
+POST {{baseUrl}}/api/v1/customer/change-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "oldPassword": "sainyinyitun",
+    "newPassword": "sainyinyitun"
+}
