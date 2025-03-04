@@ -4,7 +4,8 @@ import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";// Import the TradingSettings component
+import TradingSettings from "../../../components/ui/TradingSettings";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -49,6 +50,8 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+
+      <TradingSettings /> {/* Use the TradingSettings component here */}
     </div>
   );
 }

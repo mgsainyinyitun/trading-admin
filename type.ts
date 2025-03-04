@@ -172,3 +172,11 @@ export interface Admin {
 // password  String
 // createdAt DateTime @default(now())
 // updatedAt DateTime
+
+export interface TradingSetting {
+    id: number;
+    seconds: number;
+    percentage: number;
+    tradingType: trade_tradeType;
+    winRate: number;
+}

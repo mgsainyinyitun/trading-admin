@@ -1,7 +1,8 @@
 "use server"
 
 import { prisma } from "@/lib/prisma";
-import { TradingHistory } from "@/type";
+import { TradingHistory, TradingSetting } from "@/type";
+import { trade_tradingStatus } from "@prisma/client";
 
 export async function getAllTrading(): Promise<TradingHistory[]> {
     const tradingHistory = await prisma.trade.findMany({
@@ -30,3 +31,36 @@ export async function getAllTrading(): Promise<TradingHistory[]> {
     }));
 }
 
+// update trading status
+export async function updateTradingStatus(tradeId: number, newStatus: string): Promise<TradingHistory> {
+    const trade = await prisma.trade.update({
+        where: { id: tradeId },
+        include: {
+            customer: true,
+            account: true,
+        },
+        data: { tradingStatus: newStatus as trade_tradingStatus },
+    });
+
+    return {
+        id: trade.id,
+        customerId: trade.customerId.toString(),
+        customerName: trade.customer.name,
+        accountId: trade.accountId,
+        accountNumber: trade.account.accountNo,
+        createdAt: trade.createdAt.toISOString(),
+        updatedAt: trade.updatedAt.toISOString(),
+        tradeType: trade.tradeType,
+        period: trade.period,
+        loginId: trade.customer.loginId,
+        tradingStatus: trade.tradingStatus,
+        isSuccess: trade.isSuccess ?? false,
+        tradeQuantity: trade.tradeQuantity,
+    };
+}
+
+// get trading settings
+export async function getTradingSettings(): Promise<TradingSetting[]> {
+    const settings = await prisma.tradingsetting.findMany();
+    return settings as TradingSetting[];
+}

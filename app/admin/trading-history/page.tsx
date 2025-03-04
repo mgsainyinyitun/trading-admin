@@ -11,11 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TradingHistory } from "@/type"; // Import the TradingHistory type
-import { getAllTrading } from "@/app/actions/tradingActions";
+import { getAllTrading, updateTradingStatus } from "@/app/actions/tradingActions";
 import { Badge } from "@/components/ui/badge"; // Import Badge for chip design
 import { Input } from "@/components/ui/input"; // Import Input for filtering
-import { Loader2 } from "lucide-react"; // Import Loader for loading indicator
-
+import { Box, Loader2 } from "lucide-react"; // Import Loader for loading indicator
+import { Button } from "@/components/ui/button";
+import { toast, Toaster } from "sonner";
 const getTradeTypeColor = (tradeType: string) => {
     return tradeType === "LONG" ? "bg-green-100 text-green-600" : tradeType === "SHORT" ? "bg-red-100 text-red-600" : "";
 };
@@ -25,7 +26,7 @@ const getStatusColor = (isSuccess: boolean) => {
 };
 
 const getTradingStatusColor = (tradingStatus: string) => {
-    return tradingStatus === "ACTIVE" ? "bg-blue-100 text-blue-600" : tradingStatus === "INACTIVE" ? "bg-gray-100 text-gray-600" : "";
+    return tradingStatus === "COMPLETED" ? "bg-blue-100 text-green-600" : tradingStatus === "PENDING" ? "bg-gray-100 text-gray-600" : "";
 };
 
 export default function TradingHistoryPage() {
@@ -37,14 +38,16 @@ export default function TradingHistoryPage() {
     const [tradingStatusFilter, setTradingStatusFilter] = useState("");
     const [isLoading, setIsLoading] = useState(true); // State to manage loading
 
+
+    async function fetchTradingHistory() {
+        setIsLoading(true); // Set loading to true when fetching starts
+        const history = await getAllTrading();
+        setTradingHistory(history as TradingHistory[]);
+        setFilteredHistory(history as TradingHistory[]);
+        setIsLoading(false); // Set loading to false after fetching
+    }
+
     useEffect(() => {
-        const fetchTradingHistory = async () => {
-            setIsLoading(true); // Set loading to true when fetching starts
-            const history = await getAllTrading();
-            setTradingHistory(history as TradingHistory[]);
-            setFilteredHistory(history as TradingHistory[]);
-            setIsLoading(false); // Set loading to false after fetching
-        };
         fetchTradingHistory();
     }, []);
 
@@ -60,8 +63,19 @@ export default function TradingHistoryPage() {
         setFilteredHistory(filtered);
     }, [customerNameFilter, tradeTypeFilter, statusFilter, tradingStatusFilter, tradingHistory]);
 
+    const updatingTradingStatus = async (tradeId: number, newStatus: string) => {
+        const res = await updateTradingStatus(tradeId, newStatus);
+        if (res !== null) {
+            toast.success(`Trade ${tradeId} updated to status ${newStatus}, Successfully`);
+            fetchTradingHistory();
+        } else {
+            toast.error(`Error updating trade ${tradeId}`);
+        }
+    };
+
     return (
         <div className="space-y-6">
+            <Toaster position="top-center" richColors />
             <Card>
                 <CardHeader>
                     <CardTitle>Trading History</CardTitle>
@@ -107,6 +121,7 @@ export default function TradingHistoryPage() {
                                     <TableHead>Status</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Period</TableHead>
+                                    <TableHead>Action</TableHead> {/* New Action Column */}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -132,7 +147,15 @@ export default function TradingHistoryPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>{new Date(trade.createdAt).toLocaleDateString()}</TableCell>
-                                        <TableCell>{trade.period} Sec</TableCell>
+                                        <TableCell className="text-center w-20">{trade.period} Sec</TableCell>
+                                        <TableCell>
+                                            {trade.tradingStatus === 'PENDING' && (
+                                                <div className="flex gap-2">
+                                                    <Button onClick={() => updatingTradingStatus(trade.id, 'COMPLETED')} className="w-20 bg-green-500 text-white px-2 py-1 rounded">Complete</Button>
+                                                    <Button onClick={() => updatingTradingStatus(trade.id, 'FAILED')} className="w-20 bg-red-500 text-white px-2 py-1 rounded">Fail</Button>
+                                                </div>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
