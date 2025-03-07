@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
           seconds: trade.period,
           tradingType: trade.tradeType,
           percentage: ratios[trade.period as keyof typeof ratios] || 40, // Default to 40% if period not found
+          winRate: 0.5,
           createdAt: new Date(),
           updatedAt: new Date()
         }

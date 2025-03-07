@@ -69,7 +69,7 @@ Content-Type: application/json
 
 
 
-### Create Trade Request
+### Create Trade Request { customerId, tradeType, period, tradeQuantity, currency } = validatedData;
 POST {{baseUrl}}/api/v1/trade-request
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
@@ -78,7 +78,8 @@ Content-Type: application/json
   "customerId": 2,
   "tradeType": "SHORT",
   "period": 30,
-  "tradeQuantity": 100
+  "tradeQuantity": 1,
+  "currency": "USDT"
 }
 
 

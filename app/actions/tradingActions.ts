@@ -64,3 +64,12 @@ export async function getTradingSettings(): Promise<TradingSetting[]> {
     const settings = await prisma.tradingsetting.findMany();
     return settings as TradingSetting[];
 }
+
+// update trading setting
+export async function updateTradingSetting(id: number, winRate: number): Promise<TradingSetting> {
+    const setting = await prisma.tradingsetting.update({
+        where: { id },
+        data: { winRate },
+    });
+    return setting as TradingSetting;
+}

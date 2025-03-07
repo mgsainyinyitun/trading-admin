@@ -10,8 +10,6 @@ function generateAccountNumber(): string {
   return `${timestamp}${random}`;
 }
 
-
-
 const getCorsHeaders = (origin: string) => {
   const headers = {
     "Access-Control-Allow-Methods": `${process.env.ALLOWED_METHODS}`,
@@ -113,22 +111,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    try {
-      const trade = await prisma.trade.create({
+
+    // get trading settings base on period and trade type
+    let tradingSettings = await prisma.tradingsetting.findFirst({
+      where: {
+        seconds: period,
+        tradingType: tradeType,
+      },
+    });
+
+    if (!tradingSettings) {
+      // If no trading setting exists, create default settings based on predefined ratios
+      const ratios = {
+        30: 40,
+        60: 50,
+        120: 70,
+        300: 100
+      };
+      // Create new trading setting for both SHORT and LONG types
+      tradingSettings = await prisma.tradingsetting.create({
         data: {
-          customerId,
-          accountId: account.id,
-          tradeType,
-          period,
-          tradingStatus: 'PENDING',
-          tradeQuantity,
-          updatedAt: new Date(),
-        },
+          seconds: period,
+          tradingType: tradeType,
+          percentage: ratios[period as keyof typeof ratios] || 40, // Default to 40% if period not found
+          winRate: 0.5,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
       });
-      return NextResponse.json(trade, { headers: getCorsHeaders(request.headers.get("origin") || "") });
-    } catch (error) {
-      return NextResponse.json({ error: 'Error creating trade' }, { headers: getCorsHeaders(request.headers.get("origin") || "") });
     }
+
+      const sequence = [];
+      const winCount = Math.round(period * tradingSettings.winRate);
+      const loseCount = period - winCount;
+
+      for (let i = 0; i < winCount; i++) {
+        sequence.push(1);
+      }
+      for (let i = 0; i < loseCount; i++) {
+        sequence.push(0);
+      }
+
+      // Shuffle the sequence to randomize the order of wins and losses
+      for (let i = sequence.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
+      }
+
+      try {
+        const trade = await prisma.trade.create({
+          data: {
+            customerId,
+            accountId: account.id,
+            tradeType,
+            period,
+            tradingStatus: 'PENDING',
+            tradeQuantity,
+            updatedAt: new Date(),
+          },
+        });
+        return NextResponse.json(
+          {
+            trade,
+            sequence
+          },
+          { headers: getCorsHeaders(request.headers.get("origin") || "") });
+      } catch (error) {
+        return NextResponse.json({ error: 'Error creating trade' }, { headers: getCorsHeaders(request.headers.get("origin") || "") });
+      }
+    }
+    return NextResponse.json({ error: 'Method not allowed' }, { headers: getCorsHeaders(request.headers.get("origin") || "") });
   }
-  return NextResponse.json({ error: 'Method not allowed' }, { headers: getCorsHeaders(request.headers.get("origin") || "") });
-}
