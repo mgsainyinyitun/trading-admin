@@ -189,6 +189,15 @@ model exchange {
   @@index([customerId], map: "Exchange_customerId_idx")
 }
 
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum address_type {
   PRIMARY
   BILLING

@@ -12,50 +12,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-interface Exchange {
-  id: string;
-  customerId: string;
-  customerName: string;
-  fromAmount: number;
-  fromCoin: string;
-  toAmount: number;
-  toCoin: string;
-  status: 'pending' | 'completed' | 'rejected';
-  date: string;
-  reference: string;
-  rate: number;
-  notes?: string;
-}
+import { Exchange } from "@/type";
+import { useEffect, useState } from "react";
+import { getExchangeById } from "@/app/actions/exchangeActions";
 
 export default function ExchangeDetail() {
   const params = useParams();
   const id = params.id as string;
 
-  // Mock data - replace with API call
-  const exchange: Exchange = {
-    id,
-    customerId: "C001",
-    customerName: "John Doe",
-    fromAmount: 1.5,
-    fromCoin: "BTC",
-    toAmount: 25.5,
-    toCoin: "ETH",
-    status: "pending",
-    date: "2024-03-20",
-    reference: "EX001",
-    rate: 17,
-    notes: "Market order exchange"
-  };
+  const [exchange, setExchange] = useState<Exchange | null>(null);
+
+  useEffect(() => {
+    const fetchExchange = async () => {
+      const exchange = await getExchangeById(Number(id));
+      setExchange(exchange);
+    };
+    fetchExchange();
+  }, [id]);
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      completed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      APPROVED: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      REJECTED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
     };
     return styles[status as keyof typeof styles] || "";
   };
+
+  if (!exchange) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -69,7 +55,7 @@ export default function ExchangeDetail() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Exchange Details</h1>
             <p className="text-muted-foreground">
-              Reference: {exchange.reference}
+              Exchange ID: {exchange.id}
             </p>
           </div>
         </div>
@@ -99,13 +85,17 @@ export default function ExchangeDetail() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <Badge className={getStatusBadge(exchange.status)}>
-                {exchange.status.charAt(0).toUpperCase() + exchange.status.slice(1)}
+              <Badge className={getStatusBadge(exchange.exchangeStatus)}>
+                {exchange.exchangeStatus}
               </Badge>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Date</p>
-              <p className="text-lg">{new Date(exchange.date).toLocaleDateString()}</p>
+              <p className="text-sm font-medium text-muted-foreground">Created At</p>
+              <p className="text-lg">{new Date(exchange.createdAt).toLocaleDateString()}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Updated At</p>
+              <p className="text-lg">{new Date(exchange.updatedAt).toLocaleDateString()}</p>
             </div>
           </CardContent>
         </Card>
@@ -120,31 +110,31 @@ export default function ExchangeDetail() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">From</p>
                   <p className="text-lg">
-                    {exchange.fromAmount} {exchange.fromCoin}
+                    {exchange.amount} {exchange.fromCurrency}
                   </p>
+                  <p className="text-sm text-muted-foreground">Account: {exchange.fromAccountNo}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">To</p>
                   <p className="text-lg">
-                    {exchange.toAmount} {exchange.toCoin}
+                    {exchange.exchangedAmount} {exchange.toCurrency}
                   </p>
+                  <p className="text-sm text-muted-foreground">Account: {exchange.toAccountNo}</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Exchange Rate</p>
                   <p className="text-lg">
-                    1 {exchange.fromCoin} = {exchange.rate} {exchange.toCoin}
+                    1 {exchange.fromCurrency} = {exchange.exchangeRate} {exchange.toCurrency}
                   </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Exchange Type</p>
+                  <p className="text-lg">{exchange.exchangeType}</p>
                 </div>
               </div>
             </div>
-            {exchange.notes && (
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Notes</p>
-                <p className="text-lg">{exchange.notes}</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>

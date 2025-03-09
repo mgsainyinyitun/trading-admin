@@ -101,3 +101,34 @@ export const changeExchangeStatus = async (exchangeId: number, status: exchange_
     }
 };
 
+// get exchange by id
+export const getExchangeById = async (exchangeId: number): Promise<Exchange | null> => {
+    try {
+        const exchange = await prisma.exchange.findUnique({
+            where: { id: exchangeId },
+            include: {
+                customer: true
+            }
+        });
+        return exchange ? {
+            id: exchange.id,
+            fromCurrency: exchange.fromCurrency,
+            toCurrency: exchange.toCurrency,
+            fromAccountNo: exchange.fromAccountNo,
+            toAccountNo: exchange.toAccountNo,
+            amount: exchange.amount.toNumber(),
+            exchangedAmount: exchange.exchangedAmount.toNumber(),
+            exchangeRate: exchange.exchangeRate.toNumber(),
+            customerId: exchange.customerId,
+            customerName: exchange.customer.name,
+            exchangeStatus: exchange.exchangeStatus,
+            exchangeType: exchange.exchangeType,
+            createdAt: exchange.createdAt.toISOString(),
+            updatedAt: exchange.updatedAt.toISOString() 
+        } : null;
+    } catch (error) {
+        console.error("Error fetching exchange by id:", error);
+        return null;
+    }
+};  
+
