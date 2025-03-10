@@ -102,6 +102,7 @@ export async function POST(req: Request) {
           email,
           name,
           phone,
+          loginId: generateLoginId(),
           password: hashedPassword,
           socialSecurityNumber,
           active: true,
@@ -126,17 +127,13 @@ export async function POST(req: Request) {
     });
 
     // update loginId base on id e.g 1 => 00001 , 2=> 00002 , 3=> 00003
-    const loginId = await prisma.customer.update({
+    const updatedCustomer = await prisma.customer.update({
       where: { id: customer.id },
-      data: { loginId: `C${customer.id.toString().padStart(6, '0')}` }
+      data: { loginId: `${customer.id.toString().padStart(6, '0')}` }
     });
 
-
     // Remove password from response
-    const { password: _, ...customerData } = customer;
-
-    // add loginId to customerData
-    customerData.loginId = loginId;
+    const { password: _, ...customerData } = updatedCustomer;
 
     return NextResponse.json(
       {
