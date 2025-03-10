@@ -108,3 +108,13 @@ Content-Type: application/json
 POST {{baseUrl}}/api/v1/trade-cleanup
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
+
+
+### check workikng
+GET {{baseUrl}}/api/v1/working
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+
+
+

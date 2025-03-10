@@ -1,8 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/profile/page": "app/admin/profile/page.js",
-  "/admin/customers/page": "app/admin/customers/page.js",
-  "/admin/trading-history/page": "app/admin/trading-history/page.js",
-  "/admin/deposits/page": "app/admin/deposits/page.js"
-}
+{}

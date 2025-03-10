@@ -83,3 +83,21 @@ export const getCustomerTransactions = async (id: number): Promise<TransactionDe
 
     return transactionList as unknown as TransactionDetails[];
 };
+
+// get recent users
+export const getRecentUsers = async (): Promise<Customer[]> => {
+    const customers = await prisma.customer.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+    });
+
+    return customers as unknown as Customer[];
+};
+
+// get total customers
+export const getTotalCustomers = async (): Promise<number> => {
+    const totalCustomers = await prisma.customer.count();
+    return totalCustomers;
+};
+
+

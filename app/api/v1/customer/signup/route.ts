@@ -17,7 +17,9 @@ function generateAccountNumber(): string {
 
 // Add this function near the top with other utility functions
 function generateLoginId(): string {
-  return `USR${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `C${timestamp}${random}`;
 }
 
 const getCorsHeaders = (origin: string) => {
@@ -99,7 +101,6 @@ export async function POST(req: Request) {
         data: {
           email,
           name,
-          loginId: generateLoginId(),
           phone,
           password: hashedPassword,
           socialSecurityNumber,
@@ -124,8 +125,18 @@ export async function POST(req: Request) {
       return newCustomer;
     });
 
+    // update loginId base on id e.g 1 => 00001 , 2=> 00002 , 3=> 00003
+    const loginId = await prisma.customer.update({
+      where: { id: customer.id },
+      data: { loginId: `C${customer.id.toString().padStart(6, '0')}` }
+    });
+
+
     // Remove password from response
     const { password: _, ...customerData } = customer;
+
+    // add loginId to customerData
+    customerData.loginId = loginId;
 
     return NextResponse.json(
       {

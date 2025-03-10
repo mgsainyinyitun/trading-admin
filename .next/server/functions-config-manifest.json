@@ -1,1 +1,0 @@
-{"version":1,"functions":{"/api/auth/[...nextauth]":{},"/api/v1/customer/profile":{},"/api/v1/customer/verify-email":{},"/api/v1/trade-request":{},"/api/v1/customer/login":{},"/api/v1/trade-success":{},"/api/v1/customer/signup":{},"/api/v1/transactions/deposit-request":{},"/api/v2/transactions/deposit-request":{},"/api/v1/customer/assets":{},"/api/v1/transactions/file":{}}}

@@ -73,3 +73,40 @@ export async function updateTradingSetting(id: number, winRate: number): Promise
     });
     return setting as TradingSetting;
 }
+
+// get total trading
+export async function getTotalTrading(): Promise<number> {
+    const totalTrading = await prisma.trade.count();
+    return totalTrading;
+}
+
+// get total trading amount
+export async function getTotalTradingAmount(): Promise<number> {
+    const totalTradingAmount = await prisma.trade.aggregate({
+        _sum: { tradeQuantity: true },
+    });
+    return totalTradingAmount._sum.tradeQuantity ?? 0;
+}
+
+// get total deposit
+export async function getTotalDeposit(): Promise<number> {
+    const totalDeposit = await prisma.transaction.aggregate({
+        where: {
+            type: "DEPOSIT",
+        },
+        _sum: { amount: true },
+    });
+    console.log("totalDeposit::", totalDeposit);
+    return Number(totalDeposit._sum.amount ?? 0);
+}
+
+// get total withdraw
+export async function getTotalWithdraw(): Promise<number> {
+    const totalWithdraw = await prisma.transaction.aggregate({
+        where: {
+            type: "WITHDRAWAL",
+        },
+        _sum: { amount: true },
+    });
+    return Number(totalWithdraw._sum.amount ?? 0);
+}

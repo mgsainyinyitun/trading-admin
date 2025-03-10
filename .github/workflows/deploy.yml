@@ -60,6 +60,9 @@ jobs:
             echo "Checking if container is running..."
             if docker ps | grep -q trading-admin; then
               echo "✅ trading-admin has been successfully deployed!"
+
+              # delete unused images
+              docker image prune -a
             else
               echo "❌ Container failed to start"
               docker logs trading-admin

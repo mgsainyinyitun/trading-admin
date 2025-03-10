@@ -26,8 +26,8 @@ POST {{baseUrl}}/api/v1/customer/signup
 Content-Type: application/json
 
 {
-    "email": "newuser@example.com",
-    "name": "New User",
+    "email": "newuser1@example.com",
+    "name": "New User 1",
     "phone": "+1234567890",
     "password": "newpassword123",
     "socialSecurityNumber": "123-45-6789"
