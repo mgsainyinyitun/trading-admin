@@ -13,7 +13,11 @@ RUN npm install --omit=dev
 COPY . .
 
 # Generate Prisma client
+RUN npx prisma migrate deploy
 RUN npx prisma generate
+
+# seed db
+# RUN npx prisma db seed
 
 # Build the Next.js app
 RUN npm run build
