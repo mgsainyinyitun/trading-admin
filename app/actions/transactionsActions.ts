@@ -28,6 +28,7 @@ export async function getAllDeposits() {
                         select: {
                             name: true,
                             id: true,
+                            loginId: true
                         },
                     },
                 },
@@ -42,6 +43,7 @@ export async function getAllDeposits() {
     return deposits.map(deposit => ({
         id: deposit.id,  // Ensure this is a number
         customerId: deposit.account.customer.id,  // Adjust as necessary
+        loginId: deposit.account.customer.loginId,
         customerName: deposit.account.customer.name,
         transactionId: deposit.transactionId,
         type: deposit.type,
@@ -200,6 +202,7 @@ export async function getAllWithdrawals(): Promise<Withdrawal[]> {
                             select: {
                                 name: true,
                                 id: true,
+                                loginId: true
                             },
                         },
                     },
@@ -224,6 +227,7 @@ export async function getAllWithdrawals(): Promise<Withdrawal[]> {
             updatedAt: withdrawal.updatedAt.toISOString(),
             customerId: withdrawal.account.customer.id,
             customerName: withdrawal.account.customer.name,
+            loginId: withdrawal.account.customer.loginId
         }));
     } catch (error) {
         console.error(error)
@@ -241,6 +245,14 @@ export async function updateWithdrawalStatus(withdrawalId: string, newStatus: tr
 
         if (!withdrawal) {
             return { message: "Withdrawal not found" }
+        }
+
+        if(newStatus === transaction_status.FAILED){
+            // add the amount again 
+            const user = await prisma.account.update({
+                where: { id: withdrawal?.accountId },
+                data: { balance: { increment: withdrawal.amount} },
+            });
         }
 
         const amount = withdrawal?.amount.minus(withdrawal?.amount.times(0.01));
@@ -308,5 +320,6 @@ export async function getWithdrawalById(withdrawalId: string): Promise<Withdrawa
         updatedAt: withdrawal.updatedAt.toISOString(),
         customerId: withdrawal.account.customer.id,
         customerName: withdrawal.account.customer.name,
+        loginId: withdrawal.account.customer.loginId
     }
 }
