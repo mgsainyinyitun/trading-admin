@@ -1,9 +1,10 @@
-import { address_type, exchange_status, exchange_type, trade_tradeType, trade_tradingStatus, transaction_status } from "@prisma/client";
+import { address_type, exchange_status, exchange_type, message_type, notification_type, trade_tradeType, trade_tradingStatus, transaction_status } from "@prisma/client";
 
 export interface Deposit {
     id: number;  // Ensure this is a number
     customerId: string;  // Adjust as necessary
     customerName: string;
+    loginId: string;
     transactionId: string;  // Added transactionId
     type: string;  // Added type
     accountId: string;
@@ -75,6 +76,24 @@ export interface Customer {
     trade: Trade[];
 }
 
+export interface CustomerWithUnreadMessagesCount {
+    id: number;
+    email: string;
+    name: string;
+    phone?: string;
+    createdAt: string;
+    updatedAt: string;
+    active: boolean;
+    isActivated: boolean;
+    lastLoginTime?: string;
+    socialSecurityNumber?: string;
+    loginId: string;
+    account: Account[];
+    address: Address[];
+    trade: Trade[];
+    unreadMessagesCount: number;
+}
+
 export interface Account {
     id: number;
     accountNo: string;
@@ -138,6 +157,7 @@ export interface Withdrawal {
     updatedAt: string;
     customerId: number;
     customerName: string;
+    loginId: string;
 }
 export interface Exchange {
     id: number;
@@ -181,4 +201,37 @@ export interface TradingSetting {
     percentage: number;
     tradingType: trade_tradeType;
     winRate: number;
+}
+
+
+export interface Message {
+    id: number;
+    content: string;
+    from: string;        // loginId of sender (customer or admin)
+    to: string;          // loginId of receiver (customer or admin)
+    customerId: number;
+    type: message_type;
+    isReadbyAdmin: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Winrate {
+    id: number;
+    customerId: number;
+    winRate: number;
+    createdAt: string;
+    updatedAt: string;
+    customer?: any; // Relation to customer, optional and can be typed better if needed
+}
+
+
+export interface Notification {
+    id: number;
+    title: string;
+    message: string;
+    type: notification_type;
+    isReadbyAdmin: boolean;
+    createdAt: string;
+    updatedAt: string;
 }

@@ -53,6 +53,7 @@ model admin {
   createdAt DateTime @default(now())
   updatedAt DateTime
   avatar    String?
+
   @@index([loginId], map: "Admin_loginId_idx")
 }
 
@@ -75,6 +76,25 @@ model customer {
   trade                trade[]
   winrate              winrate[]
   exchange             exchange[]
+  message              message[]
+}
+
+model message {
+  id            Int          @id @default(autoincrement())
+  content       String
+  from          String       // loginId of sender (customer or admin)
+  to            String       // loginId of receiver (customer or admin)
+  customerId    Int
+  type          message_type @default(TEXT)
+  isReadbyAdmin Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+
+  customer customer @relation(fields: [customerId], references: [id], map: "Message_customerId_fkey")
+
+  @@index([customerId], map: "Message_customerId_idx")
+  @@index([from], map: "Message_from_idx")
+  @@index([to], map: "Message_to_idx")
 }
 
 model invalidtoken {
@@ -105,15 +125,13 @@ model trade {
   @@index([customerId], map: "Trade_customerId_fkey")
 }
 
-
 model generalSetting {
-  id Int @id @default(autoincrement())
-  name String @unique
-  value String
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 model tradingsetting {
   id          Int                        @id @default(autoincrement())
@@ -200,13 +218,14 @@ model exchange {
   @@index([customerId], map: "Exchange_customerId_idx")
 }
 
-
 model notification {
-  id        Int      @id @default(autoincrement())
-  title     String
-  message   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int              @id @default(autoincrement())
+  title           String
+  message         String
+  type            notification_type
+  isReadbyAdmin   Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 enum address_type {
@@ -253,4 +272,20 @@ enum exchange_status {
 enum exchange_type {
   BUY
   SELL
+}
+
+enum notification_type {
+  NEW_CUSTOMER
+  NEW_MESSAGE
+  SYSTEM_ALERT
+  TRANSACTION_UPDATE
+  WITHDRAWAL_REQUEST
+  DEPOSIT_REQUEST
+  DEPOSIT_SUCCESS
+  ACCOUNT_VERIFIED
+}
+
+enum message_type {
+  TEXT
+  IMAGE
 }
